@@ -1,43 +1,59 @@
 // src/utils/api.js
-// Axios instance pre-configured with base URL and auth interceptors
+import axios from "axios";
 
-import axios from 'axios'
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const api = axios.create({
   baseURL: `${API_BASE_URL}/api`,
-  withCredentials: true,         // Send httpOnly cookie automatically
-  headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
+  headers: { "Content-Type": "application/json" },
   timeout: 15000,
-})
+});
 
-// ── Request interceptor: attach Bearer token from localStorage ────────────
+// ── Request: attach token from localStorage ───────────────────────────────────
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem("token");
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+      config.headers.Authorization = `Bearer ${token}`;
     }
-    return config
+    return config;
   },
-  (error) => Promise.reject(error)
-)
+  (error) => Promise.reject(error),
+);
 
-// ── Response interceptor: auto-logout on 401 ─────────────────────────────
+// ── Response: only redirect to /login on 401 for PROTECTED routes ─────────────
+// Public routes (/products, home) may also call the API without a token.
+// We should NOT redirect those — only redirect when the user is supposed
+// to be logged in but their token expired or was tampered with.
+const PROTECTED_PREFIXES = [
+  "/auth/me",
+  "/auth/logout",
+  "/auth/change-password",
+  "/orders",
+  "/wishlist",
+  "/admin",
+  "/esewa",
+  "/seller",
+];
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      // Redirect to login if not already there
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login'
+      const url = error.config?.url || "";
+      const isProtected = PROTECTED_PREFIXES.some((p) => url.includes(p));
+
+      if (isProtected) {
+        localStorage.removeItem("token");
+        // Only hard-redirect if not already on the login page
+        if (!window.location.pathname.includes("/login")) {
+          window.location.href = "/login";
+        }
       }
     }
-    return Promise.reject(error)
-  }
-)
+    return Promise.reject(error);
+  },
+);
 
-export default api
+export default api;

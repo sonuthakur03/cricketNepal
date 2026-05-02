@@ -1,10 +1,10 @@
 // controllers/productController.js
 // Full product CRUD, search, filters, reviews, wishlist
 
-const asyncHandler = require('express-async-handler');
-const Product = require('../models/Product');
-const User = require('../models/User');
-const { cloudinary } = require('../config/cloudinary');
+const asyncHandler = require("express-async-handler");
+const Product = require("../models/Product");
+const User = require("../models/User");
+const { cloudinary } = require("../config/cloudinary");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // @desc    Get all products with filters, sorting, search, pagination
@@ -36,7 +36,7 @@ const getProducts = asyncHandler(async (req, res) => {
   if (category) query.category = category;
 
   // Brand filter (supports comma-separated: ?brand=SG,MRF)
-  if (brand) query.brand = { $in: brand.split(',') };
+  if (brand) query.brand = { $in: brand.split(",") };
 
   // Price range filter
   if (minPrice || maxPrice) {
@@ -49,14 +49,14 @@ const getProducts = asyncHandler(async (req, res) => {
   if (rating) query.rating = { $gte: Number(rating) };
 
   // Featured filter
-  if (featured === 'true') query.isFeatured = true;
+  if (featured === "true") query.isFeatured = true;
 
   // Sorting options
   const sortMap = {
     newest: { createdAt: -1 },
     oldest: { createdAt: 1 },
-    'price-asc': { price: 1 },
-    'price-desc': { price: -1 },
+    "price-asc": { price: 1 },
+    "price-desc": { price: -1 },
     rating: { rating: -1 },
     popular: { numReviews: -1 },
   };
@@ -68,11 +68,11 @@ const getProducts = asyncHandler(async (req, res) => {
 
   const [products, total] = await Promise.all([
     Product.find(query)
-      .populate('seller', 'name sellerInfo.storeName')
+      .populate("seller", "name sellerInfo.storeName")
       .sort(sortBy)
       .skip(skip)
       .limit(limitNum)
-      .select('-reviews'), // Exclude reviews from list for performance
+      .select("-reviews"), // Exclude reviews from list for performance
     Product.countDocuments(query),
   ]);
 
@@ -95,17 +95,18 @@ const getProduct = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   // Support both ObjectId and slug lookups
-  const query = id.match(/^[0-9a-fA-F]{24}$/)
-    ? { _id: id }
-    : { slug: id };
+  const query = id.match(/^[0-9a-fA-F]{24}$/) ? { _id: id } : { slug: id };
 
   const product = await Product.findOne({ ...query, isActive: true })
-    .populate('seller', 'name sellerInfo.storeName sellerInfo.storeDescription avatar')
-    .populate('reviews.user', 'name avatar');
+    .populate(
+      "seller",
+      "name sellerInfo.storeName sellerInfo.storeDescription avatar",
+    )
+    .populate("reviews.user", "name avatar");
 
   if (!product) {
     res.status(404);
-    throw new Error('Product not found');
+    throw new Error("Product not found");
   }
 
   res.status(200).json({ success: true, data: product });
@@ -117,34 +118,59 @@ const getProduct = asyncHandler(async (req, res) => {
 // @access  Private (seller, admin)
 // ─────────────────────────────────────────────────────────────────────────────
 const createProduct = asyncHandler(async (req, res) => {
-  // Attach the logged-in seller as the product owner
-  req.body.seller = req.user.id;
+  // Helper to safely parse FormData fields
+  const parseFormData = (body, existingImages = []) => {
+    const data = { ...body };
 
-  // Handle uploaded images from multer/cloudinary
-  if (req.files && req.files.length > 0) {
-    req.body.images = req.files.map((file) => ({
-      public_id: file.filename,
-      url: file.path,
-    }));
-  }
+    // Seller always comes from the authenticated user — never trust the body
+    data.seller = req.user.id;
 
-  // Parse specifications if sent as JSON string
-  if (req.body.specifications && typeof req.body.specifications === 'string') {
-    req.body.specifications = JSON.parse(req.body.specifications);
-  }
+    // Images from multer
+    if (req.files && req.files.length > 0) {
+      data.images = [
+        ...existingImages,
+        ...req.files.map((f) => ({ public_id: f.filename, url: f.path })),
+      ];
+    }
 
-  // Parse arrays sent as comma-separated strings
-  if (req.body.sizes && typeof req.body.sizes === 'string') {
-    req.body.sizes = req.body.sizes.split(',').map((s) => s.trim());
-  }
-  if (req.body.colors && typeof req.body.colors === 'string') {
-    req.body.colors = req.body.colors.split(',').map((s) => s.trim());
-  }
-  if (req.body.tags && typeof req.body.tags === 'string') {
-    req.body.tags = req.body.tags.split(',').map((s) => s.trim());
-  }
+    // Parse specifications — may be JSON string or already an array
+    if (data.specifications) {
+      if (typeof data.specifications === "string") {
+        try {
+          data.specifications = JSON.parse(data.specifications);
+        } catch {
+          data.specifications = [];
+        }
+      }
+    }
 
-  const product = await Product.create(req.body);
+    // Parse comma-separated arrays
+    ["sizes", "colors", "tags"].forEach((key) => {
+      if (typeof data[key] === "string") {
+        data[key] = data[key]
+          ? data[key]
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [];
+      }
+    });
+
+    // FormData sends booleans as strings — convert them
+    if (typeof data.isFeatured === "string") {
+      data.isFeatured = data.isFeatured === "true";
+    }
+
+    // Convert numeric strings
+    if (data.price) data.price = Number(data.price);
+    if (data.discountPrice) data.discountPrice = Number(data.discountPrice);
+    if (data.stock) data.stock = Number(data.stock);
+
+    return data;
+  };
+
+  const productData = parseFormData(req.body);
+  const product = await Product.create(productData);
 
   res.status(201).json({ success: true, data: product });
 });
@@ -159,25 +185,78 @@ const updateProduct = asyncHandler(async (req, res) => {
 
   if (!product) {
     res.status(404);
-    throw new Error('Product not found');
+    throw new Error("Product not found");
   }
 
   // Only the seller who owns it or an admin can update
-  if (product.seller.toString() !== req.user.id && req.user.role !== 'admin') {
+  if (product.seller.toString() !== req.user.id && req.user.role !== "admin") {
     res.status(403);
-    throw new Error('Not authorized to update this product');
+    throw new Error("Not authorized to update this product");
   }
 
-  // Handle new image uploads
+  // Build a clean update object — never allow seller/reviews to be overwritten via body
+  const updates = {};
+  const allowed = [
+    "name",
+    "description",
+    "price",
+    "discountPrice",
+    "category",
+    "brand",
+    "stock",
+    "sizes",
+    "colors",
+    "tags",
+    "specifications",
+    "isFeatured",
+    "isActive",
+  ];
+  allowed.forEach((key) => {
+    if (req.body[key] !== undefined) updates[key] = req.body[key];
+  });
+
+  // Parse specifications — may be JSON string or already an array
+  if (updates.specifications && typeof updates.specifications === "string") {
+    try {
+      updates.specifications = JSON.parse(updates.specifications);
+    } catch {
+      delete updates.specifications;
+    }
+  }
+
+  // Parse comma-separated arrays
+  ["sizes", "colors", "tags"].forEach((key) => {
+    if (typeof updates[key] === "string") {
+      updates[key] = updates[key]
+        ? updates[key]
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
+    }
+  });
+
+  // FormData sends booleans as strings — convert
+  if (typeof updates.isFeatured === "string") {
+    updates.isFeatured = updates.isFeatured === "true";
+  }
+
+  // Convert numeric strings
+  if (updates.price !== undefined) updates.price = Number(updates.price);
+  if (updates.discountPrice !== undefined)
+    updates.discountPrice = Number(updates.discountPrice);
+  if (updates.stock !== undefined) updates.stock = Number(updates.stock);
+
+  // Append new uploaded images to existing ones
   if (req.files && req.files.length > 0) {
-    const newImages = req.files.map((file) => ({
-      public_id: file.filename,
-      url: file.path,
+    const newImages = req.files.map((f) => ({
+      public_id: f.filename,
+      url: f.path,
     }));
-    req.body.images = [...(product.images || []), ...newImages];
+    updates.images = [...(product.images || []), ...newImages];
   }
 
-  product = await Product.findByIdAndUpdate(req.params.id, req.body, {
+  product = await Product.findByIdAndUpdate(req.params.id, updates, {
     new: true,
     runValidators: true,
   });
@@ -195,12 +274,12 @@ const deleteProduct = asyncHandler(async (req, res) => {
 
   if (!product) {
     res.status(404);
-    throw new Error('Product not found');
+    throw new Error("Product not found");
   }
 
-  if (product.seller.toString() !== req.user.id && req.user.role !== 'admin') {
+  if (product.seller.toString() !== req.user.id && req.user.role !== "admin") {
     res.status(403);
-    throw new Error('Not authorized to delete this product');
+    throw new Error("Not authorized to delete this product");
   }
 
   // Delete images from Cloudinary
@@ -212,7 +291,9 @@ const deleteProduct = asyncHandler(async (req, res) => {
 
   await product.deleteOne();
 
-  res.status(200).json({ success: true, message: 'Product deleted successfully' });
+  res
+    .status(200)
+    .json({ success: true, message: "Product deleted successfully" });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -225,22 +306,26 @@ const deleteProductImage = asyncHandler(async (req, res) => {
 
   if (!product) {
     res.status(404);
-    throw new Error('Product not found');
+    throw new Error("Product not found");
   }
 
-  if (product.seller.toString() !== req.user.id && req.user.role !== 'admin') {
+  if (product.seller.toString() !== req.user.id && req.user.role !== "admin") {
     res.status(403);
-    throw new Error('Not authorized');
+    throw new Error("Not authorized");
   }
 
-  const image = product.images.find((img) => img.public_id === req.params.imageId);
+  const image = product.images.find(
+    (img) => img.public_id === req.params.imageId,
+  );
   if (!image) {
     res.status(404);
-    throw new Error('Image not found');
+    throw new Error("Image not found");
   }
 
   await cloudinary.uploader.destroy(req.params.imageId);
-  product.images = product.images.filter((img) => img.public_id !== req.params.imageId);
+  product.images = product.images.filter(
+    (img) => img.public_id !== req.params.imageId,
+  );
   await product.save();
 
   res.status(200).json({ success: true, data: product.images });
@@ -257,12 +342,12 @@ const addReview = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
   if (!product) {
     res.status(404);
-    throw new Error('Product not found');
+    throw new Error("Product not found");
   }
 
   // Check if user already reviewed this product
   const existingReview = product.reviews.find(
-    (r) => r.user.toString() === req.user.id
+    (r) => r.user.toString() === req.user.id,
   );
 
   if (existingReview) {
@@ -282,11 +367,14 @@ const addReview = asyncHandler(async (req, res) => {
 
   // Recalculate average rating
   product.rating =
-    product.reviews.reduce((acc, r) => acc + r.rating, 0) / product.reviews.length;
+    product.reviews.reduce((acc, r) => acc + r.rating, 0) /
+    product.reviews.length;
 
   await product.save();
 
-  res.status(201).json({ success: true, message: 'Review submitted successfully' });
+  res
+    .status(201)
+    .json({ success: true, message: "Review submitted successfully" });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -298,30 +386,31 @@ const deleteReview = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
   if (!product) {
     res.status(404);
-    throw new Error('Product not found');
+    throw new Error("Product not found");
   }
 
   const review = product.reviews.id(req.params.reviewId);
   if (!review) {
     res.status(404);
-    throw new Error('Review not found');
+    throw new Error("Review not found");
   }
 
-  if (review.user.toString() !== req.user.id && req.user.role !== 'admin') {
+  if (review.user.toString() !== req.user.id && req.user.role !== "admin") {
     res.status(403);
-    throw new Error('Not authorized to delete this review');
+    throw new Error("Not authorized to delete this review");
   }
 
   review.deleteOne();
   product.numReviews = product.reviews.length;
   product.rating =
     product.reviews.length > 0
-      ? product.reviews.reduce((acc, r) => acc + r.rating, 0) / product.reviews.length
+      ? product.reviews.reduce((acc, r) => acc + r.rating, 0) /
+        product.reviews.length
       : 0;
 
   await product.save();
 
-  res.status(200).json({ success: true, message: 'Review deleted' });
+  res.status(200).json({ success: true, message: "Review deleted" });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -331,8 +420,8 @@ const deleteReview = asyncHandler(async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const getProductMeta = asyncHandler(async (req, res) => {
   const [brands, categories] = await Promise.all([
-    Product.distinct('brand', { isActive: true }),
-    Product.distinct('category', { isActive: true }),
+    Product.distinct("brand", { isActive: true }),
+    Product.distinct("category", { isActive: true }),
   ]);
 
   res.status(200).json({ success: true, data: { brands, categories } });
@@ -344,8 +433,12 @@ const getProductMeta = asyncHandler(async (req, res) => {
 // @access  Private (seller)
 // ─────────────────────────────────────────────────────────────────────────────
 const getMyProducts = asyncHandler(async (req, res) => {
-  const products = await Product.find({ seller: req.user.id }).sort({ createdAt: -1 });
-  res.status(200).json({ success: true, count: products.length, data: products });
+  const products = await Product.find({ seller: req.user.id }).sort({
+    createdAt: -1,
+  });
+  res
+    .status(200)
+    .json({ success: true, count: products.length, data: products });
 });
 
 module.exports = {
