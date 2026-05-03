@@ -21,6 +21,7 @@ import ProfilePage from "./pages/ProfilePage";
 import SellerDashboard from "./pages/SellerDashboard";
 import ProductFormPage from "./pages/ProductFormPage";
 import AdminDashboard from "./pages/AdminDashboard";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 import {
   EsewaSuccessPage,
   EsewaFailurePage,
@@ -40,8 +41,16 @@ function PageTransition({ children }) {
   );
 }
 
+// Pages that should NOT show the standard navbar/footer
+const NO_LAYOUT_PATHS = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/verify-email",
+  "/reset-password",
+];
+
 export default function App() {
-  // ── Dark mode ────────────────────────────────────────────────────────────────
   const [darkMode, setDarkMode] = useState(() => {
     const stored = localStorage.getItem("theme");
     if (stored) return stored === "dark";
@@ -53,23 +62,19 @@ export default function App() {
     localStorage.setItem("theme", darkMode ? "dark" : "light");
   }, [darkMode]);
 
-  // ── Re-hydrate user on every page refresh ────────────────────────────────────
-  // Zustand persist restores token from localStorage, but we also call fetchMe
-  // so the user object is always fresh from the server.
   const fetchMe = useAuthStore((s) => s.fetchMe);
   useEffect(() => {
     fetchMe();
   }, []);
 
   const location = useLocation();
-
-  const isAuthPage = ["/login", "/register", "/forgot-password"].some((p) =>
+  const hideLayout = NO_LAYOUT_PATHS.some((p) =>
     location.pathname.startsWith(p),
   );
 
   return (
     <div className="min-h-screen flex flex-col">
-      {!isAuthPage && (
+      {!hideLayout && (
         <Navbar
           darkMode={darkMode}
           toggleDarkMode={() => setDarkMode((d) => !d)}
@@ -123,11 +128,13 @@ export default function App() {
               }
             />
 
-            {/* Auth */}
+            {/* Auth pages — no navbar */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
+            <Route path="/reset-password/:token" element={<LoginPage />} />
 
-            {/* Protected — any logged-in user */}
+            {/* Protected */}
             <Route
               path="/checkout"
               element={
@@ -237,7 +244,7 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      {!isAuthPage && <Footer />}
+      {!hideLayout && <Footer />}
     </div>
   );
 }

@@ -86,17 +86,17 @@ export default function ProductCard({ product, index = 0 }) {
           {/* Badges */}
           <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5">
             {hasDiscount && (
-              <span className="badge-red text-xs font-bold shadow-sm">
+              <span className="text-xs font-bold px-2 py-0.5 rounded-lg bg-red-500 text-white shadow-sm">
                 -{discountPct}%
               </span>
             )}
             {product.isFeatured && (
-              <span className="badge-gold text-xs font-bold shadow-sm">
+              <span className="text-xs font-bold px-2 py-0.5 rounded-lg bg-amber-500 text-white shadow-sm">
                 ⭐ Featured
               </span>
             )}
             {product.stock === 0 && (
-              <span className="badge-gray text-xs font-bold shadow-sm">
+              <span className="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-600 text-white shadow-sm">
                 Out of Stock
               </span>
             )}
