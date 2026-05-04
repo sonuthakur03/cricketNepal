@@ -41,6 +41,7 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQ, setSearchQ] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [catOpen, setCatOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const dropRef = useRef(null);
   const navigate = useNavigate();
@@ -63,6 +64,7 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
     const handler = (e) => {
       if (dropRef.current && !dropRef.current.contains(e.target))
         setDropdownOpen(false);
+      setCatOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -149,25 +151,32 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
               </NavLink>
             ))}
 
-            {/* Categories dropdown */}
-            <div className="relative group">
+            {/* Categories dropdown — click-based */}
+            <div className="relative">
               <button
+                onClick={() => setCatOpen((o) => !o)}
                 className={`flex items-center gap-1 px-4 py-2 rounded-xl font-semibold text-sm transition-all ${textColor} ${hoverBg}`}
                 style={{ fontFamily: "Syne, sans-serif" }}
               >
-                Categories <HiChevronDown className="w-4 h-4" />
+                Categories
+                <HiChevronDown
+                  className={`w-4 h-4 transition-transform ${catOpen ? "rotate-180" : ""}`}
+                />
               </button>
-              <div className="absolute top-full left-0 mt-1 w-52 card p-2 hidden group-hover:block animate-slide-down z-50">
-                {CATEGORIES.map((cat) => (
-                  <Link
-                    key={cat}
-                    to={`/products?category=${cat}`}
-                    className="block px-3 py-2 text-sm rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:text-amber-600 transition-colors"
-                  >
-                    {cat}
-                  </Link>
-                ))}
-              </div>
+              {catOpen && (
+                <div className="absolute top-full left-0 mt-1 w-52 card p-2 animate-slide-down z-50 shadow-lg">
+                  {CATEGORIES.map((cat) => (
+                    <Link
+                      key={cat}
+                      to={`/products?category=${cat}`}
+                      onClick={() => setCatOpen(false)}
+                      className="block px-3 py-2 text-sm rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:text-amber-600 transition-colors"
+                    >
+                      {cat}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

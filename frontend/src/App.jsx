@@ -22,7 +22,9 @@ import SellerDashboard from "./pages/SellerDashboard";
 import ProductFormPage from "./pages/ProductFormPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
+import OrderDetailPage from "./pages/OrderDetailPage";
 import {
+  KhaltiCallbackPage,
   EsewaSuccessPage,
   EsewaFailurePage,
   NotFoundPage,
@@ -156,6 +158,16 @@ export default function App() {
               }
             />
             <Route
+              path="/orders/:id"
+              element={
+                <ProtectedRoute>
+                  <PageTransition>
+                    <OrderDetailPage />
+                  </PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/wishlist"
               element={
                 <ProtectedRoute>
@@ -177,6 +189,14 @@ export default function App() {
             />
 
             {/* Payment callbacks */}
+            <Route
+              path="/payment/khalti/callback"
+              element={
+                <ProtectedRoute>
+                  <KhaltiCallbackPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/payment/esewa/success"
               element={
