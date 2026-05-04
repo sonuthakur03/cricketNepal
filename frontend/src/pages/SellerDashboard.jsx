@@ -67,7 +67,14 @@ export default function SellerDashboard() {
         `/orders/seller-orders?page=${page}&limit=10`,
       );
       setOrders(data.data);
-      setRevenue(data.revenue || { totalRevenue: 0, totalOrders: 0 });
+      setRevenue(
+        data.revenue || {
+          totalRevenue: 0,
+          paidRevenue: 0,
+          pendingRevenue: 0,
+          totalOrders: 0,
+        },
+      );
       setTotalPages(data.totalPages);
     } catch {}
   };
@@ -121,13 +128,49 @@ export default function SellerDashboard() {
           color="Orders"
         />
         <StatCard
-          label="Total Revenue"
+          label="Total Earned"
           value={formatPrice(revenue.totalRevenue)}
           icon="💰"
           color="Revenue"
         />
-        <StatCard label="This Month" value="—" icon="📈" color="Growth" />
+        <StatCard
+          label="Awaiting Collection"
+          value={formatPrice(revenue.pendingRevenue || 0)}
+          icon="🕐"
+          color="COD"
+        />
       </div>
+      {/* Revenue breakdown */}
+      {(revenue.paidRevenue > 0 || revenue.pendingRevenue > 0) && (
+        <div className="card p-4 mb-6 flex flex-wrap gap-4 items-center">
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-green-500 inline-block" />
+            <span className="text-sm text-[var(--color-text-muted)]">
+              Paid online:
+            </span>
+            <span className="text-sm font-bold text-green-600">
+              {formatPrice(revenue.paidRevenue || 0)}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-amber-500 inline-block" />
+            <span className="text-sm text-[var(--color-text-muted)]">
+              COD to collect:
+            </span>
+            <span className="text-sm font-bold text-amber-600">
+              {formatPrice(revenue.pendingRevenue || 0)}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 ml-auto">
+            <span className="text-sm text-[var(--color-text-muted)]">
+              Total earned:
+            </span>
+            <span className="text-sm font-black text-primary-600">
+              {formatPrice(revenue.totalRevenue || 0)}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6 border-b border-[var(--color-border)]">

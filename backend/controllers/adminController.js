@@ -1,11 +1,11 @@
 // controllers/adminController.js
 // Admin panel: manage users, sellers, products, and view platform stats
 
-const asyncHandler = require('express-async-handler');
-const User = require('../models/User');
-const Product = require('../models/Product');
-const Order = require('../models/Order');
-const { cloudinary } = require('../config/cloudinary');
+const asyncHandler = require("express-async-handler");
+const User = require("../models/User");
+const Product = require("../models/Product");
+const Order = require("../models/Order");
+const { cloudinary } = require("../config/cloudinary");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // @desc    Get platform dashboard stats
@@ -22,16 +22,43 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     recentOrders,
     topProducts,
   ] = await Promise.all([
-    User.countDocuments({ role: 'user' }),
-    User.countDocuments({ role: 'seller' }),
+    User.countDocuments({ role: "user" }),
+    User.countDocuments({ role: "seller" }),
     Product.countDocuments({ isActive: true }),
     Order.countDocuments(),
     Order.aggregate([
-      { $match: { isPaid: true } },
-      { $group: { _id: null, total: { $sum: '$totalPrice' } } },
+      // Include COD confirmed orders as earned revenue (not just isPaid)
+      { $match: { orderStatus: { $nin: ["cancelled", "pending"] } } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$totalPrice" },
+          paidTotal: { $sum: { $cond: ["$isPaid", "$totalPrice", 0] } },
+          codPending: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ["$paymentMethod", "cod"] },
+                    { $eq: ["$isPaid", false] },
+                  ],
+                },
+                "$totalPrice",
+                0,
+              ],
+            },
+          },
+        },
+      },
     ]),
-    Order.find().sort({ createdAt: -1 }).limit(5).populate('user', 'name email'),
-    Product.find().sort({ numReviews: -1 }).limit(5).select('name images price rating numReviews'),
+    Order.find()
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate("user", "name email"),
+    Product.find()
+      .sort({ numReviews: -1 })
+      .limit(5)
+      .select("name images price rating numReviews"),
   ]);
 
   // Monthly revenue for the last 6 months
@@ -42,12 +69,12 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     { $match: { isPaid: true, createdAt: { $gte: sixMonthsAgo } } },
     {
       $group: {
-        _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
-        revenue: { $sum: '$totalPrice' },
+        _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
+        revenue: { $sum: "$totalPrice" },
         orders: { $sum: 1 },
       },
     },
-    { $sort: { '_id.year': 1, '_id.month': 1 } },
+    { $sort: { "_id.year": 1, "_id.month": 1 } },
   ]);
 
   res.status(200).json({
@@ -58,6 +85,8 @@ const getDashboardStats = asyncHandler(async (req, res) => {
       totalProducts,
       totalOrders,
       totalRevenue: revenueData[0]?.total || 0,
+      paidRevenue: revenueData[0]?.paidTotal || 0,
+      codPendingRevenue: revenueData[0]?.codPending || 0,
       monthlyRevenue,
       recentOrders,
       topProducts,
@@ -79,17 +108,29 @@ const getAllUsers = asyncHandler(async (req, res) => {
   if (req.query.role) filterQuery.role = req.query.role;
   if (req.query.search) {
     filterQuery.$or = [
-      { name: { $regex: req.query.search, $options: 'i' } },
-      { email: { $regex: req.query.search, $options: 'i' } },
+      { name: { $regex: req.query.search, $options: "i" } },
+      { email: { $regex: req.query.search, $options: "i" } },
     ];
   }
 
   const [users, total] = await Promise.all([
-    User.find(filterQuery).sort({ createdAt: -1 }).skip(skip).limit(limit).select('-password'),
+    User.find(filterQuery)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .select("-password"),
     User.countDocuments(filterQuery),
   ]);
 
-  res.status(200).json({ success: true, total, totalPages: Math.ceil(total / limit), currentPage: page, data: users });
+  res
+    .status(200)
+    .json({
+      success: true,
+      total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+      data: users,
+    });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -98,8 +139,11 @@ const getAllUsers = asyncHandler(async (req, res) => {
 // @access  Private (admin)
 // ─────────────────────────────────────────────────────────────────────────────
 const getUser = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id).select('-password');
-  if (!user) { res.status(404); throw new Error('User not found'); }
+  const user = await User.findById(req.params.id).select("-password");
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
   res.status(200).json({ success: true, data: user });
 });
 
@@ -109,7 +153,7 @@ const getUser = asyncHandler(async (req, res) => {
 // @access  Private (admin)
 // ─────────────────────────────────────────────────────────────────────────────
 const updateUser = asyncHandler(async (req, res) => {
-  const allowedUpdates = ['role', 'isActive', 'sellerInfo'];
+  const allowedUpdates = ["role", "isActive", "sellerInfo"];
   const updates = {};
   allowedUpdates.forEach((field) => {
     if (req.body[field] !== undefined) updates[field] = req.body[field];
@@ -118,9 +162,12 @@ const updateUser = asyncHandler(async (req, res) => {
   const user = await User.findByIdAndUpdate(req.params.id, updates, {
     new: true,
     runValidators: true,
-  }).select('-password');
+  }).select("-password");
 
-  if (!user) { res.status(404); throw new Error('User not found'); }
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
 
   res.status(200).json({ success: true, data: user });
 });
@@ -132,11 +179,17 @@ const updateUser = asyncHandler(async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const deleteUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
-  if (!user) { res.status(404); throw new Error('User not found'); }
-  if (user.role === 'admin') { res.status(400); throw new Error('Cannot delete an admin account'); }
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+  if (user.role === "admin") {
+    res.status(400);
+    throw new Error("Cannot delete an admin account");
+  }
 
   // Delete all products (and their Cloudinary images) if seller
-  if (user.role === 'seller') {
+  if (user.role === "seller") {
     const products = await Product.find({ seller: user._id });
     for (const product of products) {
       for (const image of product.images) {
@@ -153,7 +206,9 @@ const deleteUser = asyncHandler(async (req, res) => {
 
   await user.deleteOne();
 
-  res.status(200).json({ success: true, message: 'User and related data deleted' });
+  res
+    .status(200)
+    .json({ success: true, message: "User and related data deleted" });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -163,15 +218,21 @@ const deleteUser = asyncHandler(async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const approveSeller = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
-  if (!user) { res.status(404); throw new Error('User not found'); }
-  if (user.role !== 'seller') { res.status(400); throw new Error('User is not a seller'); }
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+  if (user.role !== "seller") {
+    res.status(400);
+    throw new Error("User is not a seller");
+  }
 
   user.sellerInfo.isApproved = req.body.isApproved;
   await user.save();
 
   res.status(200).json({
     success: true,
-    message: `Seller ${req.body.isApproved ? 'approved' : 'rejected'}`,
+    message: `Seller ${req.body.isApproved ? "approved" : "rejected"}`,
     data: user,
   });
 });
@@ -190,8 +251,8 @@ const getAllProducts = asyncHandler(async (req, res) => {
   if (req.query.category) filterQuery.category = req.query.category;
   if (req.query.search) {
     filterQuery.$or = [
-      { name: { $regex: req.query.search, $options: 'i' } },
-      { brand: { $regex: req.query.search, $options: 'i' } },
+      { name: { $regex: req.query.search, $options: "i" } },
+      { brand: { $regex: req.query.search, $options: "i" } },
     ];
   }
 
@@ -200,12 +261,20 @@ const getAllProducts = asyncHandler(async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate('seller', 'name email')
-      .select('-reviews'),
+      .populate("seller", "name email")
+      .select("-reviews"),
     Product.countDocuments(filterQuery),
   ]);
 
-  res.status(200).json({ success: true, total, totalPages: Math.ceil(total / limit), currentPage: page, data: products });
+  res
+    .status(200)
+    .json({
+      success: true,
+      total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+      data: products,
+    });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -215,14 +284,17 @@ const getAllProducts = asyncHandler(async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const toggleFeatured = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
-  if (!product) { res.status(404); throw new Error('Product not found'); }
+  if (!product) {
+    res.status(404);
+    throw new Error("Product not found");
+  }
 
   product.isFeatured = !product.isFeatured;
   await product.save();
 
   res.status(200).json({
     success: true,
-    message: `Product ${product.isFeatured ? 'featured' : 'unfeatured'}`,
+    message: `Product ${product.isFeatured ? "featured" : "unfeatured"}`,
     data: product,
   });
 });

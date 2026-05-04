@@ -457,7 +457,15 @@ const getSellerOrders = asyncHandler(async (req, res) => {
     Order.countDocuments({ "orderItems.seller": req.user.id }),
   ]);
   const rev = await Order.aggregate([
-    { $match: { "orderItems.seller": req.user._id, isPaid: true } },
+    // Count ALL non-cancelled orders as earned revenue:
+    // - isPaid: true  → already paid (Khalti / eSewa)
+    // - paymentMethod: cod + confirmed/processing/shipped/delivered → COD is guaranteed
+    {
+      $match: {
+        "orderItems.seller": req.user._id,
+        orderStatus: { $nin: ["cancelled", "pending"] },
+      },
+    },
     { $unwind: "$orderItems" },
     { $match: { "orderItems.seller": req.user._id } },
     {
@@ -467,19 +475,60 @@ const getSellerOrders = asyncHandler(async (req, res) => {
           $sum: { $multiply: ["$orderItems.price", "$orderItems.quantity"] },
         },
         totalOrders: { $sum: 1 },
+        paidRevenue: {
+          $sum: {
+            $cond: [
+              "$isPaid",
+              { $multiply: ["$orderItems.price", "$orderItems.quantity"] },
+              0,
+            ],
+          },
+        },
+        pendingRevenue: {
+          $sum: {
+            $cond: [
+              "$isPaid",
+              0,
+              { $multiply: ["$orderItems.price", "$orderItems.quantity"] },
+            ],
+          },
+        },
       },
     },
   ]);
-  res
-    .status(200)
-    .json({
-      success: true,
-      total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-      revenue: rev[0] || { totalRevenue: 0, totalOrders: 0 },
-      data: orders,
-    });
+
+  // Also get breakdown by payment method
+  const codStats = await Order.aggregate([
+    {
+      $match: {
+        "orderItems.seller": req.user._id,
+        paymentMethod: "cod",
+        orderStatus: { $nin: ["cancelled", "pending"] },
+      },
+    },
+    {
+      $group: {
+        _id: "$isPaid",
+        count: { $sum: 1 },
+        amount: { $sum: "$totalPrice" },
+      },
+    },
+  ]);
+
+  res.status(200).json({
+    success: true,
+    total,
+    totalPages: Math.ceil(total / limit),
+    currentPage: page,
+    revenue: {
+      totalRevenue: rev[0]?.totalRevenue || 0,
+      paidRevenue: rev[0]?.paidRevenue || 0,
+      pendingRevenue: rev[0]?.pendingRevenue || 0, // COD confirmed but not yet collected
+      totalOrders: rev[0]?.totalOrders || 0,
+      codStats,
+    },
+    data: orders,
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
