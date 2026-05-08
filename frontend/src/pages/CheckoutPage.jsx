@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { HiOutlineCheckCircle } from "react-icons/hi";
 import api from "../utils/api";
+import StripePayment from "../components/payment/StripePayment";
 import useCartStore from "../context/cartStore";
 import useAuthStore from "../context/authStore";
 import {
@@ -36,6 +37,12 @@ const PAYMENT_METHODS = [
     icon: "💵",
     desc: "Pay when your order arrives",
   },
+  {
+    value: "stripe",
+    label: "Credit / Debit Card",
+    icon: "💳",
+    desc: "Visa, Mastercard via Stripe",
+  },
 ];
 
 export default function CheckoutPage() {
@@ -48,6 +55,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [orderId, setOrderId] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState("khalti");
+  const [stripeOrderId, setStripeOrderId] = useState(null); // must be before any return
 
   const [shipping, setShipping] = useState({
     fullName: user?.name || "",
@@ -141,6 +149,7 @@ export default function CheckoutPage() {
     form.submit();
   };
 
+  // ── Stripe ─────────────────────────────────────────────────────────────────
   // ── Main handler ────────────────────────────────────────────────────────────
   const handlePlaceOrder = async () => {
     setLoading(true);
@@ -436,6 +445,20 @@ export default function CheckoutPage() {
                 </div>
               )}
 
+              {/* Stripe inline card form */}
+              {paymentMethod === "stripe" && stripeOrderId && (
+                <div className="border border-[var(--color-border)] rounded-2xl p-5 mb-4">
+                  <StripePayment
+                    orderId={stripeOrderId}
+                    totalNPR={total}
+                    onSuccess={() => {
+                      clearCart();
+                      setStep(3);
+                    }}
+                  />
+                </div>
+              )}
+
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep(1)}
@@ -443,17 +466,38 @@ export default function CheckoutPage() {
                 >
                   ← Back
                 </button>
-                <button
-                  onClick={handlePlaceOrder}
-                  disabled={loading}
-                  className="btn-primary flex-1"
-                >
-                  {loading
-                    ? "Processing..."
-                    : paymentMethod === "cod"
-                      ? "Place Order"
-                      : `Pay ${formatPrice(total)}`}
-                </button>
+                {paymentMethod !== "stripe" && (
+                  <button
+                    onClick={handlePlaceOrder}
+                    disabled={loading}
+                    className="btn-primary flex-1"
+                  >
+                    {loading
+                      ? "Processing..."
+                      : paymentMethod === "cod"
+                        ? "Place Order"
+                        : `Pay ${formatPrice(total)}`}
+                  </button>
+                )}
+                {paymentMethod === "stripe" && !stripeOrderId && (
+                  <button
+                    onClick={async () => {
+                      setLoading(true);
+                      try {
+                        const newOrderId = await placeOrder();
+                        setStripeOrderId(newOrderId);
+                      } catch (err) {
+                        toast.error(getErrorMessage(err));
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    disabled={loading}
+                    className="btn-primary flex-1"
+                  >
+                    {loading ? "Processing..." : "Enter Card Details →"}
+                  </button>
+                )}
               </div>
             </motion.div>
           )}

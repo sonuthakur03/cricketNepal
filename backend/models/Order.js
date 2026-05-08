@@ -1,32 +1,32 @@
 // models/Order.js
 // Order schema with Khalti/eSewa payment support
 
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const orderItemSchema = new mongoose.Schema({
   product: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Product',
+    ref: "Product",
     required: true,
   },
   seller: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: "User",
     required: true,
   },
   name: { type: String, required: true },
   image: { type: String, required: true },
   price: { type: Number, required: true },
   quantity: { type: Number, required: true, min: 1 },
-  size: { type: String, default: '' },
-  color: { type: String, default: '' },
+  size: { type: String, default: "" },
+  color: { type: String, default: "" },
 });
 
 const orderSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
     orderItems: [orderItemSchema],
@@ -39,7 +39,7 @@ const orderSchema = new mongoose.Schema(
       city: { type: String, required: true },
       district: { type: String, required: true },
       province: { type: String, required: true },
-      postalCode: { type: String, default: '' },
+      postalCode: { type: String, default: "" },
     },
 
     // Pricing breakdown
@@ -52,7 +52,7 @@ const orderSchema = new mongoose.Schema(
     paymentMethod: {
       type: String,
       required: true,
-      enum: ['khalti', 'esewa', 'cod'], // Cash on Delivery also supported
+      enum: ["khalti", "esewa", "cod", "stripe"],
     },
     paymentResult: {
       // Populated after successful payment verification
@@ -73,28 +73,36 @@ const orderSchema = new mongoose.Schema(
     // Fulfillment status
     orderStatus: {
       type: String,
-      enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'],
-      default: 'pending',
+      enum: [
+        "pending",
+        "confirmed",
+        "processing",
+        "shipped",
+        "delivered",
+        "cancelled",
+        "refunded",
+      ],
+      default: "pending",
     },
     isDelivered: { type: Boolean, default: false },
     deliveredAt: { type: Date },
 
     // Order tracking
-    trackingNumber: { type: String, default: '' },
-    notes: { type: String, default: '' },
+    trackingNumber: { type: String, default: "" },
+    notes: { type: String, default: "" },
 
     // Cancellation info
     cancelledAt: { type: Date },
-    cancelReason: { type: String, default: '' },
+    cancelReason: { type: String, default: "" },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // ── Index for common queries ──────────────────────────────────────────────
 orderSchema.index({ user: 1, createdAt: -1 });
 orderSchema.index({ orderStatus: 1 });
-orderSchema.index({ 'orderItems.seller': 1 });
+orderSchema.index({ "orderItems.seller": 1 });
 
-module.exports = mongoose.model('Order', orderSchema);
+module.exports = mongoose.model("Order", orderSchema);

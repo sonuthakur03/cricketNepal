@@ -17,6 +17,7 @@ const orderRoutes = require("./routes/orderRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
 const esewaRoutes = require("./routes/esewaRoutes");
+const stripeRoutes = require("./routes/stripeRoutes");
 
 connectDB();
 const app = express();
@@ -76,6 +77,13 @@ app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/register", authLimiter);
 app.use("/api/auth/forgot-password", authLimiter);
 
+// ── Stripe webhook — must be before body parsers (needs raw body)
+app.use(
+  "/api/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  require("./controllers/stripeController").stripeWebhook,
+);
+
 // ── 4. Body parsers ───────────────────────────────────────────────────────────
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
@@ -100,6 +108,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/esewa", esewaRoutes);
+app.use("/api/stripe", stripeRoutes);
 
 // ── 7. Serve frontend in production ──────────────────────────────────────────
 if (process.env.NODE_ENV === "production") {
