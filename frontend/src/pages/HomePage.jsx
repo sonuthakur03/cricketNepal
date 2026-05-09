@@ -52,131 +52,372 @@ const FEATURES = [
 // ── Hero Section ──────────────────────────────────────────────────────────────
 function HeroSection() {
   return (
-    <section className="relative min-h-[92vh] flex items-center overflow-hidden bg-dark-950">
-      {/* Animated background */}
-      <div className="absolute inset-0 bg-cricket-pattern opacity-30" />
-      <div className="absolute inset-0 bg-gradient-to-br from-dark-950 via-dark-900/95 to-primary-950/80" />
-
-      {/* Glowing orbs */}
-      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-primary-600/20 rounded-full blur-3xl animate-pulse" />
+    <section
+      className="relative min-h-[95vh] flex items-center overflow-hidden"
+      style={{
+        background:
+          "linear-gradient(135deg, #0d0d0a 0%, #1a1a14 45%, #0f1a0e 100%)",
+      }}
+    >
+      {/* Dot pattern overlay */}
       <div
-        className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-gold-500/10 rounded-full blur-3xl animate-pulse"
-        style={{ animationDelay: "1s" }}
+        className="absolute inset-0 opacity-20"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, #D4A843 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+        }}
       />
 
-      <div className="page-container relative z-10 py-20 grid lg:grid-cols-2 gap-12 items-center">
-        {/* Text */}
+      {/* Green glow orbs */}
+      <div
+        className="absolute top-1/3 right-1/3 w-[500px] h-[500px] rounded-full blur-3xl opacity-20 animate-pulse"
+        style={{ background: "radial-gradient(circle, #16a34a, transparent)" }}
+      />
+      <div
+        className="absolute bottom-1/4 left-1/4 w-64 h-64 rounded-full blur-3xl opacity-15 animate-pulse"
+        style={{
+          background: "radial-gradient(circle, #D4A843, transparent)",
+          animationDelay: "1.5s",
+        }}
+      />
+
+      <div className="page-container relative z-10 py-24 grid lg:grid-cols-2 gap-16 items-center">
+        {/* ── Left: Text ── */}
         <motion.div
           initial={{ opacity: 0, x: -40 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.7, ease: "easeOut" }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
-          <motion.span
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm font-medium mb-6"
+            className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border text-sm font-semibold mb-8"
+            style={{
+              borderColor: "rgba(212,168,67,0.4)",
+              background: "rgba(212,168,67,0.08)",
+              color: "#D4A843",
+            }}
           >
-            <span className="w-2 h-2 bg-amber-400 rounded-full animate-ping" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#D4A843] animate-ping" />
             Nepal's #1 Cricket Store
-          </motion.span>
+          </motion.div>
 
           <h1
-            className="text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[1.05] mb-6"
-            style={{ fontFamily: "Syne, sans-serif" }}
+            className="font-black text-white leading-[1.02] mb-6"
+            style={{
+              fontSize: "clamp(2.8rem, 6vw, 5.5rem)",
+              fontFamily: "Playfair Display, serif",
+              letterSpacing: "-0.02em",
+            }}
           >
             Play Like
             <br />
-            <span className="gradient-text">Champions.</span>
+            <span
+              style={{
+                background: "linear-gradient(90deg, #D4A843, #f4e4a1, #D4A843)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              Champions.
+            </span>
             <br />
-            <span className="text-slate-300">Gear Like Pros.</span>
+            <span style={{ color: "#b0b0a4" }}>Gear Like Pros.</span>
           </h1>
 
-          <p className="text-slate-400 text-lg leading-relaxed mb-8 max-w-md">
+          <p
+            style={{ color: "#8f8f82" }}
+            className="text-lg leading-relaxed mb-10 max-w-md"
+          >
             From Kathmandu to Koshi — shop authentic cricket equipment, jerseys,
             and gear. Trusted by Nepal's best players.
           </p>
 
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-4 mb-12">
             <Link
               to="/products"
-              className="text-base px-8 py-4 rounded-xl font-bold bg-amber-500 hover:bg-amber-600 text-white transition-all hover:-translate-y-0.5 shadow-glow-gold"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-base transition-all hover:-translate-y-0.5"
+              style={{
+                background: "#D4A843",
+                color: "#111110",
+                fontFamily: "Plus Jakarta Sans, sans-serif",
+              }}
             >
               Shop All Gear →
             </Link>
             <Link
               to="/products?featured=true"
-              className="btn-secondary text-base px-8 py-4 border-slate-600 text-slate-300 hover:border-primary-500 hover:text-white"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-semibold text-base transition-all hover:-translate-y-0.5"
+              style={{
+                border: "1px solid rgba(255,255,255,0.15)",
+                color: "#f4f4f0",
+                background: "rgba(255,255,255,0.05)",
+                fontFamily: "Plus Jakarta Sans, sans-serif",
+              }}
             >
               Featured Picks
             </Link>
           </div>
 
           {/* Stats */}
-          <div className="flex gap-8 mt-10 pt-8 border-t border-slate-800">
+          <div
+            className="flex gap-10 pt-8"
+            style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
+          >
             {[
               { value: "500+", label: "Products" },
               { value: "10K+", label: "Happy Players" },
-              { value: "7", label: "Provinces Delivered" },
+              { value: "7", label: "Provinces" },
             ].map((s) => (
               <div key={s.label}>
                 <p
-                  className="text-2xl font-black text-white"
-                  style={{ fontFamily: "Syne, sans-serif" }}
+                  className="font-black text-white text-2xl"
+                  style={{ fontFamily: "Playfair Display, serif" }}
                 >
                   {s.value}
                 </p>
-                <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+                <p className="text-xs mt-0.5" style={{ color: "#555549" }}>
+                  {s.label}
+                </p>
               </div>
             ))}
           </div>
         </motion.div>
 
-        {/* Visual */}
+        {/* ── Right: Cricket pitch visual ── */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.85 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
           className="hidden lg:flex items-center justify-center relative"
         >
-          {/* Central cricket ball */}
-          <div className="relative w-80 h-80">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary-500/30 to-primary-800/20 rounded-full blur-2xl animate-pulse" />
-            <div className="absolute inset-8 bg-gradient-to-br from-primary-600 to-primary-800 rounded-full shadow-2xl shadow-primary-900/50 flex items-center justify-center">
-              <span className="text-8xl filter drop-shadow-lg">🏏</span>
-            </div>
-            {/* Floating badges */}
-            {[
-              { text: "SG Bats", top: "0%", left: "10%", delay: 0 },
-              { text: "Kookaburra", top: "15%", right: "0%", delay: 0.3 },
-              { text: "Nepal 🇳🇵", bottom: "10%", left: "0%", delay: 0.6 },
-              { text: "MRF", bottom: "20%", right: "5%", delay: 0.9 },
-            ].map((badge, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.8 + badge.delay, type: "spring" }}
+          {/* Outer glow ring */}
+          <div
+            className="absolute w-96 h-96 rounded-full opacity-30 animate-pulse"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(22,163,74,0.4) 0%, transparent 70%)",
+            }}
+          />
+
+          {/* Main circle — cricket pitch green */}
+          <div
+            className="relative w-80 h-80 rounded-full flex items-center justify-center"
+            style={{
+              background:
+                "linear-gradient(145deg, #1a4a1a 0%, #0f3d0f 40%, #0a2e0a 100%)",
+              boxShadow:
+                "0 0 80px rgba(22,163,74,0.3), 0 0 30px rgba(22,163,74,0.15), inset 0 1px 0 rgba(255,255,255,0.05)",
+            }}
+          >
+            {/* Pitch lines */}
+            <div className="absolute inset-0 rounded-full overflow-hidden opacity-20">
+              <div className="absolute inset-x-0 top-1/2 h-px bg-white/50" />
+              <div className="absolute inset-y-0 left-1/2 w-px bg-white/50" />
+              <div
+                className="absolute w-24 h-24 rounded-full border border-white/30"
                 style={{
-                  position: "absolute",
-                  top: badge.top,
-                  bottom: badge.bottom,
-                  left: badge.left,
-                  right: badge.right,
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%,-50%)",
                 }}
-                className="bg-dark-800/80 backdrop-blur-sm border border-primary-700/40 rounded-xl px-3 py-1.5 text-white text-xs font-semibold shadow-lg"
-              >
-                {badge.text}
-              </motion.div>
-            ))}
+              />
+            </div>
+
+            {/* Cricket bat SVG — more realistic */}
+            <motion.div
+              animate={{ rotate: [0, -3, 3, -2, 0] }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+              className="relative z-10"
+            >
+              <svg width="120" height="180" viewBox="0 0 120 180" fill="none">
+                {/* Blade */}
+                <path
+                  d="M35 20 Q30 15 32 8 Q38 2 52 2 Q66 2 72 8 Q74 15 69 20 L72 130 Q72 140 60 142 Q48 140 48 130 Z"
+                  fill="url(#bladeGrad)"
+                />
+                {/* Blade grain lines */}
+                <line
+                  x1="44"
+                  y1="15"
+                  x2="44"
+                  y2="135"
+                  stroke="rgba(0,0,0,0.12)"
+                  strokeWidth="1"
+                />
+                <line
+                  x1="52"
+                  y1="10"
+                  x2="52"
+                  y2="138"
+                  stroke="rgba(0,0,0,0.08)"
+                  strokeWidth="1"
+                />
+                <line
+                  x1="60"
+                  y1="10"
+                  x2="60"
+                  y2="138"
+                  stroke="rgba(0,0,0,0.08)"
+                  strokeWidth="1"
+                />
+                <line
+                  x1="68"
+                  y1="15"
+                  x2="68"
+                  y2="135"
+                  stroke="rgba(0,0,0,0.12)"
+                  strokeWidth="1"
+                />
+                {/* Splice */}
+                <rect
+                  x="48"
+                  y="130"
+                  width="24"
+                  height="12"
+                  rx="2"
+                  fill="url(#spliceGrad)"
+                />
+                {/* Handle */}
+                <rect
+                  x="53"
+                  y="142"
+                  width="14"
+                  height="32"
+                  rx="4"
+                  fill="url(#handleGrad)"
+                />
+                {/* Grip bands */}
+                {[148, 155, 162, 169].map((y, i) => (
+                  <rect
+                    key={i}
+                    x="53"
+                    y={y}
+                    width="14"
+                    height="2.5"
+                    rx="1"
+                    fill="rgba(0,0,0,0.3)"
+                  />
+                ))}
+                <defs>
+                  <linearGradient id="bladeGrad" x1="35" y1="0" x2="85" y2="0">
+                    <stop offset="0%" stopColor="#c8a876" />
+                    <stop offset="40%" stopColor="#e8c98a" />
+                    <stop offset="100%" stopColor="#b8904a" />
+                  </linearGradient>
+                  <linearGradient id="spliceGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#6b4c2a" />
+                    <stop offset="100%" stopColor="#4a3020" />
+                  </linearGradient>
+                  <linearGradient id="handleGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#2a1810" />
+                    <stop offset="50%" stopColor="#3d2415" />
+                    <stop offset="100%" stopColor="#2a1810" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </motion.div>
+
+            {/* Cricket ball */}
+            <motion.div
+              animate={{ y: [-4, 4, -4], rotate: [0, 10, 0] }}
+              transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 0.5,
+              }}
+              className="absolute bottom-10 right-10"
+            >
+              <svg width="44" height="44" viewBox="0 0 44 44">
+                <defs>
+                  <radialGradient id="ballGrad" cx="35%" cy="30%">
+                    <stop offset="0%" stopColor="#e05555" />
+                    <stop offset="60%" stopColor="#c02020" />
+                    <stop offset="100%" stopColor="#8b0000" />
+                  </radialGradient>
+                </defs>
+                <circle cx="22" cy="22" r="20" fill="url(#ballGrad)" />
+                <path
+                  d="M22 4 Q28 14 28 22 Q28 30 22 40"
+                  stroke="white"
+                  strokeWidth="1.5"
+                  fill="none"
+                  opacity="0.7"
+                />
+                <path
+                  d="M22 4 Q16 14 16 22 Q16 30 22 40"
+                  stroke="white"
+                  strokeWidth="1.5"
+                  fill="none"
+                  opacity="0.7"
+                />
+                {/* seam stitches */}
+                {[8, 12, 16, 20, 24, 28, 32, 36].map((y, i) => (
+                  <line
+                    key={i}
+                    x1={i % 2 === 0 ? 19 : 25}
+                    y1={y}
+                    x2={i % 2 === 0 ? 21 : 27}
+                    y2={y + 2}
+                    stroke="white"
+                    strokeWidth="1"
+                    opacity="0.6"
+                  />
+                ))}
+              </svg>
+            </motion.div>
           </div>
+
+          {/* Floating brand badges */}
+          {[
+            { text: "🏏 SG", x: "-15%", y: "5%", delay: 0.6 },
+            { text: "Kookaburra 🦘", x: "65%", y: "10%", delay: 0.9 },
+            { text: "🇳🇵 Nepal", x: "-20%", y: "80%", delay: 1.1 },
+            { text: "MRF ⚡", x: "68%", y: "75%", delay: 1.3 },
+          ].map((b, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, scale: 0, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ delay: b.delay, type: "spring", stiffness: 200 }}
+              style={{ position: "absolute", left: b.x, top: b.y }}
+              className="px-3 py-1.5 rounded-xl text-xs font-semibold text-white backdrop-blur-sm"
+              style2={{
+                background: "rgba(255,255,255,0.07)",
+                border: "1px solid rgba(255,255,255,0.12)",
+              }}
+            >
+              <div
+                style={{
+                  background: "rgba(255,255,255,0.07)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: "10px",
+                  padding: "6px 12px",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  color: "white",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {b.text}
+              </div>
+            </motion.div>
+          ))}
         </motion.div>
       </div>
 
-      {/* Wave divider */}
+      {/* Wave */}
       <div className="absolute bottom-0 left-0 right-0">
-        <svg viewBox="0 0 1440 80" className="w-full fill-[var(--color-bg)]">
-          <path d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z" />
+        <svg
+          viewBox="0 0 1440 60"
+          className="w-full"
+          style={{ fill: "var(--color-bg)" }}
+        >
+          <path d="M0,30 C360,60 1080,0 1440,30 L1440,60 L0,60 Z" />
         </svg>
       </div>
     </section>

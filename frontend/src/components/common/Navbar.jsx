@@ -85,21 +85,25 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
     navigate("/login");
   };
 
-  // On home page before scroll: use white text (hero is dark)
-  // On other pages or after scroll: use normal themed text
+  // On home page before scroll: white text (hero is dark bg)
+  // On all other pages/states: dark text in light mode, light text in dark mode
   const isTransparent = isHomePage && !scrolled;
-  const textColor = isTransparent ? "text-white" : "text-[var(--color-text)]";
+  const textColor = isTransparent
+    ? "text-white"
+    : "text-[#111110] dark:text-[#f4f4f0]";
   const hoverBg = isTransparent
     ? "hover:bg-white/10"
-    : "hover:bg-slate-100 dark:hover:bg-slate-800";
-  const iconColor = isTransparent ? "text-white" : "text-[var(--color-text)]";
+    : "hover:bg-[#f4f4f0] dark:hover:bg-[#2a2a24]";
+  const iconColor = isTransparent
+    ? "text-white"
+    : "text-[#111110] dark:text-[#f4f4f0]";
 
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-white/90 dark:bg-dark-900/90 backdrop-blur-md shadow-sm border-b border-[var(--color-border)]"
-          : "bg-transparent"
+        isTransparent
+          ? "bg-transparent text-white"
+          : "bg-white/95 dark:bg-[#1c1c17]/95 backdrop-blur-md shadow-sm border-b border-[var(--color-border)] text-[#111110] dark:text-[#f4f4f0]"
       }`}
     >
       <nav className="page-container">
