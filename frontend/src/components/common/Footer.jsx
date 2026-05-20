@@ -140,11 +140,11 @@ export default function Footer() {
             </li>
             <li className="flex items-center gap-2.5 text-sm text-slate-400">
               <HiOutlinePhone className="w-4 h-4 text-primary-400 flex-shrink-0" />
-              +977 01-4CRICKET
+              +977 01-4567890
             </li>
             <li className="flex items-center gap-2.5 text-sm text-slate-400">
               <HiOutlineMail className="w-4 h-4 text-primary-400 flex-shrink-0" />
-              hello@cricketnepal.com
+              hello@pitchnepal.com
             </li>
           </ul>
           {/* Payment badges */}
@@ -168,7 +168,7 @@ export default function Footer() {
       <div className="border-t border-dark-800">
         <div className="page-container py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
           <p>© {new Date().getFullYear()} Pitch Nepal. All rights reserved.</p>
-          <p>Made with ❤️ for Nepal's cricket community 🏏</p>
+          <p>Made for Nepal's cricket community 🏏</p>
         </div>
       </div>
     </footer>

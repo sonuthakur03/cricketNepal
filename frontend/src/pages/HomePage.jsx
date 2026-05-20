@@ -527,7 +527,7 @@ function NewArrivals() {
       <div className="page-container">
         <div className="flex items-end justify-between mb-10">
           <div>
-            <h2 className="section-title">🆕 New Arrivals</h2>
+            <h2 className="section-title text-black">🆕 New Arrivals</h2>
             <p className="section-subtitle">Fresh gear just landed</p>
           </div>
           <Link
