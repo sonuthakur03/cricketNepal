@@ -3,6 +3,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import api from "../utils/api";
 import { getErrorMessage } from "../utils/helpers";
+import useCartStore from "./cartStore";
+import useWishlistStore from "./wishlistStore";
 
 const useAuthStore = create(
   persist(
@@ -18,8 +20,9 @@ const useAuthStore = create(
           const { data } = await api.post("/auth/register", formData);
           localStorage.setItem("token", data.token);
           // Init cart for this new user
-          const { default: useCartStore } = await import("./cartStore");
-          useCartStore.getState().initCartForUser(data.data._id);
+          try {
+            useCartStore.getState().initCartForUser(data.data._id);
+          } catch {}
           set({ user: data.data, token: data.token, isLoading: false });
           return { success: true, message: data.message };
         } catch (err) {
@@ -34,9 +37,10 @@ const useAuthStore = create(
         try {
           const { data } = await api.post("/auth/login", { email, password });
           localStorage.setItem("token", data.token);
-          // Scope cart to this user (clears if different user was logged in before)
-          const { default: useCartStore } = await import("./cartStore");
-          useCartStore.getState().initCartForUser(data.data._id);
+          // Scope cart to this user
+          try {
+            useCartStore.getState().initCartForUser(data.data._id);
+          } catch {}
           set({ user: data.data, token: data.token, isLoading: false });
           return { success: true };
         } catch (err) {
@@ -47,14 +51,18 @@ const useAuthStore = create(
       },
 
       logout: async () => {
+        // Clear local storage and tokens immediately
+        localStorage.removeItem("token");
+        try {
+          useCartStore.getState().clearCartOnLogout();
+        } catch {}
+        try {
+          useWishlistStore.getState().resetWishlist();
+        } catch {}
+        set({ user: null, token: null, isLoading: false, error: null });
         try {
           await api.post("/auth/logout");
         } catch {}
-        localStorage.removeItem("token");
-        // Clear cart on logout so it's not shared between users
-        const { default: useCartStore } = await import("./cartStore");
-        useCartStore.getState().clearCartOnLogout();
-        set({ user: null, token: null });
       },
 
       fetchMe: async () => {
@@ -63,8 +71,9 @@ const useAuthStore = create(
         try {
           const { data } = await api.get("/auth/me");
           // Re-init cart for the restored user
-          const { default: useCartStore } = await import("./cartStore");
-          useCartStore.getState().initCartForUser(data.data._id);
+          try {
+            useCartStore.getState().initCartForUser(data.data._id);
+          } catch {}
           set({ user: data.data });
         } catch {
           localStorage.removeItem("token");

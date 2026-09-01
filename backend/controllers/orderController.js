@@ -3,9 +3,10 @@ const asyncHandler = require("express-async-handler");
 const axios = require("axios");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const { deductOrderStock, restoreOrderStock } = require("../utils/inventoryHelper");
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HELPER: pricing breakdown
+// HELPER: pricing breakdown (Single Source of Truth)
 // ─────────────────────────────────────────────────────────────────────────────
 const calculatePricing = (items) => {
   const itemsPrice = items.reduce((acc, i) => acc + i.price * i.quantity, 0);
@@ -34,7 +35,7 @@ const createOrder = asyncHandler(async (req, res) => {
       );
       if (!product) throw new Error(`Product not found: ${item.product}`);
       if (product.stock < item.quantity)
-        throw new Error(`Insufficient stock: ${product.name}`);
+        throw new Error(`Insufficient stock for "${product.name}". Available: ${product.stock}`);
       return {
         product: product._id,
         seller: product.seller._id,
@@ -50,18 +51,20 @@ const createOrder = asyncHandler(async (req, res) => {
   );
 
   const pricing = calculatePricing(verifiedItems);
+
+  // For COD orders, reserve stock immediately at order creation to prevent overdraft
+  if (paymentMethod === "cod") {
+    await deductOrderStock(verifiedItems);
+  }
+
   const order = await Order.create({
     user: req.user.id,
     orderItems: verifiedItems,
     shippingAddress,
     paymentMethod,
     ...pricing,
+    orderStatus: paymentMethod === "cod" ? "pending" : "pending",
   });
-
-  if (paymentMethod === "cod") {
-    order.orderStatus = "pending"; // seller must confirm
-    await order.save();
-  }
 
   res.status(201).json({ success: true, data: order });
 });
@@ -81,15 +84,13 @@ const getMyOrders = asyncHandler(async (req, res) => {
       .populate("orderItems.product", "name slug images"),
     Order.countDocuments({ user: req.user.id }),
   ]);
-  res
-    .status(200)
-    .json({
-      success: true,
-      total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-      data: orders,
-    });
+  res.status(200).json({
+    success: true,
+    total,
+    totalPages: Math.ceil(total / limit),
+    currentPage: page,
+    data: orders,
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -136,7 +137,7 @@ const initiateKhaltiPayment = asyncHandler(async (req, res) => {
     throw new Error("Order already paid");
   }
 
-  const returnUrl = `${process.env.FRONTEND_URL}/payment/khalti/callback?orderId=${order._id}`;
+  const returnUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/payment/khalti/callback?orderId=${order._id}`;
 
   try {
     const { data } = await axios.post(
@@ -154,13 +155,11 @@ const initiateKhaltiPayment = asyncHandler(async (req, res) => {
       },
       { headers: { Authorization: `Key ${process.env.KHALTI_SECRET_KEY}` } },
     );
-    // data.payment_url is where we redirect the user
-    res
-      .status(200)
-      .json({
-        success: true,
-        data: { payment_url: data.payment_url, pidx: data.pidx },
-      });
+
+    res.status(200).json({
+      success: true,
+      data: { payment_url: data.payment_url, pidx: data.pidx },
+    });
   } catch (err) {
     const msg = err.response?.data
       ? JSON.stringify(err.response.data)
@@ -206,6 +205,9 @@ const verifyKhaltiPayment = asyncHandler(async (req, res) => {
       throw new Error(`Payment not completed. Khalti status: ${data.status}`);
     }
 
+    // Atomically deduct inventory with overdraft prevention (ACID)
+    await deductOrderStock(order.orderItems);
+
     order.isPaid = true;
     order.paidAt = Date.now();
     order.orderStatus = "confirmed";
@@ -220,13 +222,6 @@ const verifyKhaltiPayment = asyncHandler(async (req, res) => {
     };
     await order.save();
 
-    await Promise.all(
-      order.orderItems.map((item) =>
-        Product.findByIdAndUpdate(item.product, {
-          $inc: { stock: -item.quantity },
-        }),
-      ),
-    );
     res.status(200).json({ success: true, data: order });
   } catch (err) {
     if (err.response) {
@@ -240,98 +235,7 @@ const verifyKhaltiPayment = asyncHandler(async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// @desc  Verify eSewa payment
-// @route POST /api/orders/:id/pay/esewa
-// ─────────────────────────────────────────────────────────────────────────────
-const verifyEsewaPayment = asyncHandler(async (req, res) => {
-  // eSewa v2 sends base64-encoded JSON in the ?data= query param
-  // Frontend decodes it and sends { encodedData } here
-  const { encodedData } = req.body;
-  if (!encodedData) {
-    res.status(400);
-    throw new Error("Missing eSewa data");
-  }
-
-  let payload;
-  try {
-    payload = JSON.parse(Buffer.from(encodedData, "base64").toString("utf8"));
-  } catch {
-    res.status(400);
-    throw new Error("Invalid eSewa payload encoding");
-  }
-
-  const { transaction_uuid, total_amount, status } = payload;
-  const order = await Order.findById(req.params.id);
-  if (!order) {
-    res.status(404);
-    throw new Error("Order not found");
-  }
-  if (order.user.toString() !== req.user.id) {
-    res.status(403);
-    throw new Error("Not authorized");
-  }
-  if (order.isPaid) {
-    res.status(400);
-    throw new Error("Already paid");
-  }
-
-  if (status !== "COMPLETE") {
-    res.status(400);
-    throw new Error(`eSewa status: ${status}`);
-  }
-
-  // Cross-check with eSewa status API
-  try {
-    const statusUrl =
-      process.env.NODE_ENV === "production"
-        ? "https://epay.esewa.com.np/api/epay/transaction/status/"
-        : "https://rc-epay.esewa.com.np/api/epay/transaction/status/";
-
-    const { data } = await axios.get(statusUrl, {
-      params: {
-        product_code: process.env.ESEWA_MERCHANT_ID || "EPAYTEST",
-        transaction_uuid,
-        total_amount,
-      },
-    });
-
-    if (data.status !== "COMPLETE") {
-      res.status(400);
-      throw new Error(`eSewa API status: ${data.status}`);
-    }
-
-    order.isPaid = true;
-    order.paidAt = Date.now();
-    order.orderStatus = "confirmed";
-    order.paymentResult = {
-      transaction_id: transaction_uuid,
-      status: "COMPLETE",
-      paid_amount: Number(total_amount),
-      payment_method: "esewa",
-      verified_at: new Date(),
-      esewa_ref_id: data.ref_id || "",
-    };
-    await order.save();
-
-    await Promise.all(
-      order.orderItems.map((item) =>
-        Product.findByIdAndUpdate(item.product, {
-          $inc: { stock: -item.quantity },
-        }),
-      ),
-    );
-    res.status(200).json({ success: true, data: order });
-  } catch (err) {
-    if (err.response) {
-      res.status(400);
-      throw new Error(`eSewa API error: ${JSON.stringify(err.response.data)}`);
-    }
-    throw err;
-  }
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// @desc  Cancel order
+// @desc  Cancel order (restores stock if deducted)
 // ─────────────────────────────────────────────────────────────────────────────
 const cancelOrder = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id);
@@ -348,19 +252,16 @@ const cancelOrder = asyncHandler(async (req, res) => {
     throw new Error(`Cannot cancel '${order.orderStatus}' order`);
   }
 
-  if (order.isPaid) {
-    await Promise.all(
-      order.orderItems.map((item) =>
-        Product.findByIdAndUpdate(item.product, {
-          $inc: { stock: item.quantity },
-        }),
-      ),
-    );
+  // Restore inventory if it was paid online OR if it was a COD order
+  if (order.isPaid || order.paymentMethod === "cod") {
+    await restoreOrderStock(order.orderItems);
   }
+
   order.orderStatus = "cancelled";
   order.cancelledAt = Date.now();
   order.cancelReason = req.body.reason || "Cancelled by user";
   await order.save();
+
   res.status(200).json({ success: true, data: order });
 });
 
@@ -427,15 +328,6 @@ const markCodPaid = asyncHandler(async (req, res) => {
     verified_at: new Date(),
   };
 
-  // Deduct stock for COD (was held on order creation)
-  await Promise.all(
-    order.orderItems.map((item) =>
-      Product.findByIdAndUpdate(item.product, {
-        $inc: { stock: -item.quantity },
-      }),
-    ),
-  );
-
   await order.save();
   res.status(200).json({ success: true, data: order });
 });
@@ -457,9 +349,6 @@ const getSellerOrders = asyncHandler(async (req, res) => {
     Order.countDocuments({ "orderItems.seller": req.user.id }),
   ]);
   const rev = await Order.aggregate([
-    // Count ALL non-cancelled orders as earned revenue:
-    // - isPaid: true  → already paid (Khalti / eSewa)
-    // - paymentMethod: cod + confirmed/processing/shipped/delivered → COD is guaranteed
     {
       $match: {
         "orderItems.seller": req.user._id,
@@ -497,7 +386,7 @@ const getSellerOrders = asyncHandler(async (req, res) => {
     },
   ]);
 
-  // Also get breakdown by payment method
+  // Breakdown by payment method
   const codStats = await Order.aggregate([
     {
       $match: {
@@ -523,7 +412,7 @@ const getSellerOrders = asyncHandler(async (req, res) => {
     revenue: {
       totalRevenue: rev[0]?.totalRevenue || 0,
       paidRevenue: rev[0]?.paidRevenue || 0,
-      pendingRevenue: rev[0]?.pendingRevenue || 0, // COD confirmed but not yet collected
+      pendingRevenue: rev[0]?.pendingRevenue || 0,
       totalOrders: rev[0]?.totalOrders || 0,
       codStats,
     },
@@ -559,20 +448,18 @@ const getAllOrders = asyncHandler(async (req, res) => {
       },
     },
   ]);
-  res
-    .status(200)
-    .json({
-      success: true,
-      total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-      stats,
-      data: orders,
-    });
+  res.status(200).json({
+    success: true,
+    total,
+    totalPages: Math.ceil(total / limit),
+    currentPage: page,
+    stats,
+    data: orders,
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// @desc  Admin: Update order status
+// @desc  Update order status (seller or admin authorized)
 // ─────────────────────────────────────────────────────────────────────────────
 const updateOrderStatus = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id);
@@ -580,6 +467,32 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error("Order not found");
   }
+
+  // Authorization check: User must be an admin OR a seller of items in this order
+  const isSeller = order.orderItems.some(
+    (i) => i.seller.toString() === req.user.id,
+  );
+  const isAdmin = req.user.role === "admin";
+  if (!isSeller && !isAdmin) {
+    res.status(403);
+    throw new Error("Not authorized to update status of this order");
+  }
+
+  const validStatuses = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"];
+  if (req.body.orderStatus && !validStatuses.includes(req.body.orderStatus)) {
+    res.status(400);
+    throw new Error(`Invalid status. Allowed statuses: ${validStatuses.join(", ")}`);
+  }
+
+  // If cancelling order via status update, restore stock (ACID consistency)
+  if (req.body.orderStatus === "cancelled" && order.orderStatus !== "cancelled") {
+    if (order.isPaid || order.paymentMethod === "cod") {
+      await restoreOrderStock(order.orderItems);
+    }
+    order.cancelledAt = Date.now();
+    order.cancelReason = req.body.reason || "Cancelled by seller/admin";
+  }
+
   order.orderStatus = req.body.orderStatus;
   if (req.body.trackingNumber) order.trackingNumber = req.body.trackingNumber;
   if (req.body.orderStatus === "delivered") {
@@ -596,7 +509,6 @@ module.exports = {
   getOrder,
   initiateKhaltiPayment,
   verifyKhaltiPayment,
-  verifyEsewaPayment,
   cancelOrder,
   sellerConfirmOrder,
   markCodPaid,
@@ -604,3 +516,4 @@ module.exports = {
   getAllOrders,
   updateOrderStatus,
 };
+

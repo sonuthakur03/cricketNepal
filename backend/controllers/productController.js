@@ -3,8 +3,68 @@
 
 const asyncHandler = require("express-async-handler");
 const Product = require("../models/Product");
-const User = require("../models/User");
+const Order = require("../models/Order");
 const { cloudinary } = require("../config/cloudinary");
+
+/**
+ * Helper to safely parse and sanitize FormData / body fields for products (DRY)
+ */
+const parseProductFormData = (body, files = [], existingImages = []) => {
+  const data = { ...body };
+
+  // Append new images from multer if uploaded
+  if (files && files.length > 0) {
+    const newImages = files.map((f) => ({
+      public_id: f.filename,
+      url: f.path,
+    }));
+    data.images = [...existingImages, ...newImages];
+  }
+
+  // Parse specifications JSON if provided as string
+  if (data.specifications !== undefined) {
+    if (typeof data.specifications === "string") {
+      try {
+        data.specifications = JSON.parse(data.specifications);
+      } catch {
+        data.specifications = [];
+      }
+    }
+  }
+
+  // Parse comma-separated arrays
+  ["sizes", "colors", "tags"].forEach((key) => {
+    if (typeof data[key] === "string") {
+      data[key] = data[key]
+        ? data[key]
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
+    }
+  });
+
+  // FormData sends booleans as strings — convert them
+  if (typeof data.isFeatured === "string") {
+    data.isFeatured = data.isFeatured === "true";
+  }
+  if (typeof data.isActive === "string") {
+    data.isActive = data.isActive === "true";
+  }
+
+  // Convert numeric strings
+  if (data.price !== undefined && data.price !== "") {
+    data.price = Number(data.price);
+  }
+  if (data.discountPrice !== undefined && data.discountPrice !== "") {
+    data.discountPrice = Number(data.discountPrice);
+  }
+  if (data.stock !== undefined && data.stock !== "") {
+    data.stock = Number(data.stock);
+  }
+
+  return data;
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // @desc    Get all products with filters, sorting, search, pagination
@@ -89,7 +149,7 @@ const getProducts = asyncHandler(async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // @desc    Get single product by ID or slug
 // @route   GET /api/products/:id
-// @access  Public
+// @access  Public (Optional auth allows seller/admin to view inactive products)
 // ─────────────────────────────────────────────────────────────────────────────
 const getProduct = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -97,7 +157,7 @@ const getProduct = asyncHandler(async (req, res) => {
   // Support both ObjectId and slug lookups
   const query = id.match(/^[0-9a-fA-F]{24}$/) ? { _id: id } : { slug: id };
 
-  const product = await Product.findOne({ ...query, isActive: true })
+  const product = await Product.findOne(query)
     .populate(
       "seller",
       "name sellerInfo.storeName sellerInfo.storeDescription avatar",
@@ -109,6 +169,16 @@ const getProduct = asyncHandler(async (req, res) => {
     throw new Error("Product not found");
   }
 
+  // If product is inactive, only the owner seller or an admin can access it
+  if (!product.isActive) {
+    const isOwner = req.user && product.seller?._id.toString() === req.user.id;
+    const isAdmin = req.user && req.user.role === "admin";
+    if (!isOwner && !isAdmin) {
+      res.status(404);
+      throw new Error("Product not found");
+    }
+  }
+
   res.status(200).json({ success: true, data: product });
 });
 
@@ -118,58 +188,10 @@ const getProduct = asyncHandler(async (req, res) => {
 // @access  Private (seller, admin)
 // ─────────────────────────────────────────────────────────────────────────────
 const createProduct = asyncHandler(async (req, res) => {
-  // Helper to safely parse FormData fields
-  const parseFormData = (body, existingImages = []) => {
-    const data = { ...body };
+  const productData = parseProductFormData(req.body, req.files);
+  // Seller always comes from the authenticated user — never trust the body
+  productData.seller = req.user.id;
 
-    // Seller always comes from the authenticated user — never trust the body
-    data.seller = req.user.id;
-
-    // Images from multer
-    if (req.files && req.files.length > 0) {
-      data.images = [
-        ...existingImages,
-        ...req.files.map((f) => ({ public_id: f.filename, url: f.path })),
-      ];
-    }
-
-    // Parse specifications — may be JSON string or already an array
-    if (data.specifications) {
-      if (typeof data.specifications === "string") {
-        try {
-          data.specifications = JSON.parse(data.specifications);
-        } catch {
-          data.specifications = [];
-        }
-      }
-    }
-
-    // Parse comma-separated arrays
-    ["sizes", "colors", "tags"].forEach((key) => {
-      if (typeof data[key] === "string") {
-        data[key] = data[key]
-          ? data[key]
-              .split(",")
-              .map((s) => s.trim())
-              .filter(Boolean)
-          : [];
-      }
-    });
-
-    // FormData sends booleans as strings — convert them
-    if (typeof data.isFeatured === "string") {
-      data.isFeatured = data.isFeatured === "true";
-    }
-
-    // Convert numeric strings
-    if (data.price) data.price = Number(data.price);
-    if (data.discountPrice) data.discountPrice = Number(data.discountPrice);
-    if (data.stock) data.stock = Number(data.stock);
-
-    return data;
-  };
-
-  const productData = parseFormData(req.body);
   const product = await Product.create(productData);
 
   res.status(201).json({ success: true, data: product });
@@ -194,8 +216,9 @@ const updateProduct = asyncHandler(async (req, res) => {
     throw new Error("Not authorized to update this product");
   }
 
-  // Build a clean update object — never allow seller/reviews to be overwritten via body
-  const updates = {};
+  const parsedUpdates = parseProductFormData(req.body, req.files, product.images || []);
+
+  // Whitelist update fields — prevent overriding seller and reviews directly
   const allowed = [
     "name",
     "description",
@@ -210,51 +233,13 @@ const updateProduct = asyncHandler(async (req, res) => {
     "specifications",
     "isFeatured",
     "isActive",
+    "images",
   ];
+
+  const updates = {};
   allowed.forEach((key) => {
-    if (req.body[key] !== undefined) updates[key] = req.body[key];
+    if (parsedUpdates[key] !== undefined) updates[key] = parsedUpdates[key];
   });
-
-  // Parse specifications — may be JSON string or already an array
-  if (updates.specifications && typeof updates.specifications === "string") {
-    try {
-      updates.specifications = JSON.parse(updates.specifications);
-    } catch {
-      delete updates.specifications;
-    }
-  }
-
-  // Parse comma-separated arrays
-  ["sizes", "colors", "tags"].forEach((key) => {
-    if (typeof updates[key] === "string") {
-      updates[key] = updates[key]
-        ? updates[key]
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : [];
-    }
-  });
-
-  // FormData sends booleans as strings — convert
-  if (typeof updates.isFeatured === "string") {
-    updates.isFeatured = updates.isFeatured === "true";
-  }
-
-  // Convert numeric strings
-  if (updates.price !== undefined) updates.price = Number(updates.price);
-  if (updates.discountPrice !== undefined)
-    updates.discountPrice = Number(updates.discountPrice);
-  if (updates.stock !== undefined) updates.stock = Number(updates.stock);
-
-  // Append new uploaded images to existing ones
-  if (req.files && req.files.length > 0) {
-    const newImages = req.files.map((f) => ({
-      public_id: f.filename,
-      url: f.path,
-    }));
-    updates.images = [...(product.images || []), ...newImages];
-  }
 
   product = await Product.findByIdAndUpdate(req.params.id, updates, {
     new: true,
@@ -285,7 +270,7 @@ const deleteProduct = asyncHandler(async (req, res) => {
   // Delete images from Cloudinary
   for (const image of product.images) {
     if (image.public_id) {
-      await cloudinary.uploader.destroy(image.public_id);
+      await cloudinary.uploader.destroy(image.public_id).catch(() => {});
     }
   }
 
@@ -322,7 +307,7 @@ const deleteProductImage = asyncHandler(async (req, res) => {
     throw new Error("Image not found");
   }
 
-  await cloudinary.uploader.destroy(req.params.imageId);
+  await cloudinary.uploader.destroy(req.params.imageId).catch(() => {});
   product.images = product.images.filter(
     (img) => img.public_id !== req.params.imageId,
   );
@@ -332,17 +317,104 @@ const deleteProductImage = asyncHandler(async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// @desc    Add/Update review for a product
+// @desc    Check if user is eligible to review product (delivered order required)
+// @route   GET /api/products/:id/can-review
+// @access  Private
+// ─────────────────────────────────────────────────────────────────────────────
+const canReviewProduct = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const query = id.match(/^[0-9a-fA-F]{24}$/) ? { _id: id } : { slug: id };
+  const product = await Product.findOne(query);
+
+  if (!product) {
+    res.status(404);
+    throw new Error("Product not found");
+  }
+
+  // Sellers cannot review their own product
+  if (product.seller.toString() === req.user.id) {
+    return res.status(200).json({
+      success: true,
+      canReview: false,
+      isSeller: true,
+      reason: "Sellers cannot review their own equipment",
+    });
+  }
+
+  const existingReview = product.reviews.find(
+    (r) => r.user.toString() === req.user.id,
+  );
+
+  // Admin can always review
+  if (req.user.role === "admin") {
+    return res.status(200).json({
+      success: true,
+      canReview: true,
+      hasDeliveredOrder: true,
+      existingReview: existingReview || null,
+    });
+  }
+
+  // Regular user must have a delivered order containing this product
+  const deliveredOrder = await Order.findOne({
+    user: req.user.id,
+    orderStatus: "delivered",
+    "orderItems.product": product._id,
+  });
+
+  res.status(200).json({
+    success: true,
+    canReview: !!deliveredOrder,
+    hasDeliveredOrder: !!deliveredOrder,
+    existingReview: existingReview || null,
+    reason: !deliveredOrder
+      ? "Reviews are unlocked after this equipment has been delivered to your address."
+      : null,
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// @desc    Add/Update review for a product (verified delivery required)
 // @route   POST /api/products/:id/reviews
-// @access  Private (user)
+// @access  Private (user, admin)
 // ─────────────────────────────────────────────────────────────────────────────
 const addReview = asyncHandler(async (req, res) => {
   const { rating, comment } = req.body;
 
-  const product = await Product.findById(req.params.id);
+  if (!rating || rating < 1 || rating > 5) {
+    res.status(400);
+    throw new Error("Please provide a rating between 1 and 5 stars");
+  }
+
+  const { id } = req.params;
+  const query = id.match(/^[0-9a-fA-F]{24}$/) ? { _id: id } : { slug: id };
+  const product = await Product.findOne(query);
+
   if (!product) {
     res.status(404);
     throw new Error("Product not found");
+  }
+
+  // Security: Prevent sellers from reviewing their own products
+  if (product.seller.toString() === req.user.id) {
+    res.status(400);
+    throw new Error("Sellers are not permitted to review their own products");
+  }
+
+  // Verification check: User must have a delivered order containing this product
+  if (req.user.role !== "admin") {
+    const deliveredOrder = await Order.findOne({
+      user: req.user.id,
+      orderStatus: "delivered",
+      "orderItems.product": product._id,
+    });
+
+    if (!deliveredOrder) {
+      res.status(403);
+      throw new Error(
+        "Verified Delivery Required: You can only review this equipment after your order has been delivered.",
+      );
+    }
   }
 
   // Check if user already reviewed this product
@@ -352,7 +424,7 @@ const addReview = asyncHandler(async (req, res) => {
 
   if (existingReview) {
     // Update existing review
-    existingReview.rating = rating;
+    existingReview.rating = Number(rating);
     existingReview.comment = comment;
   } else {
     // Add new review
@@ -362,19 +434,21 @@ const addReview = asyncHandler(async (req, res) => {
       rating: Number(rating),
       comment,
     });
-    product.numReviews = product.reviews.length;
   }
 
-  // Recalculate average rating
+  product.numReviews = product.reviews.length;
   product.rating =
-    product.reviews.reduce((acc, r) => acc + r.rating, 0) /
-    product.reviews.length;
+    product.reviews.length > 0
+      ? product.reviews.reduce((acc, r) => acc + r.rating, 0) /
+        product.reviews.length
+      : 0;
 
   await product.save();
 
-  res
-    .status(201)
-    .json({ success: true, message: "Review submitted successfully" });
+  res.status(201).json({
+    success: true,
+    message: existingReview ? "Review updated successfully" : "Review submitted successfully",
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -400,7 +474,7 @@ const deleteReview = asyncHandler(async (req, res) => {
     throw new Error("Not authorized to delete this review");
   }
 
-  review.deleteOne();
+  product.reviews.pull(req.params.reviewId);
   product.numReviews = product.reviews.length;
   product.rating =
     product.reviews.length > 0
@@ -449,7 +523,9 @@ module.exports = {
   deleteProduct,
   deleteProductImage,
   addReview,
+  canReviewProduct,
   deleteReview,
   getProductMeta,
   getMyProducts,
 };
+

@@ -7,7 +7,6 @@ const {
   getOrder,
   initiateKhaltiPayment,
   verifyKhaltiPayment,
-  verifyEsewaPayment,
   cancelOrder,
   sellerConfirmOrder,
   markCodPaid,
@@ -35,9 +34,6 @@ router.get("/:id", protect, getOrder);
 router.post("/:id/pay/khalti/initiate", protect, initiateKhaltiPayment);
 router.post("/:id/pay/khalti/verify", protect, verifyKhaltiPayment);
 
-// Payment — eSewa (verify after redirect callback)
-router.post("/:id/pay/esewa", protect, verifyEsewaPayment);
-
 // Order actions
 router.put("/:id/cancel", protect, cancelOrder);
 router.put(
@@ -52,6 +48,6 @@ router.put(
   authorize("seller", "admin"),
   markCodPaid,
 );
-router.put("/:id/status", protect, authorize("admin"), updateOrderStatus);
+router.put("/:id/status", protect, authorize("seller", "admin"), updateOrderStatus);
 
 module.exports = router;

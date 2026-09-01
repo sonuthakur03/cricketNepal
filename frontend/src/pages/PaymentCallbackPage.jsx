@@ -217,7 +217,7 @@ export function EsewaSuccessPage() {
     }
 
     api
-      .post(`/orders/${orderId}/pay/esewa`, { encodedData })
+      .post(`/esewa/verify/${orderId}`, { encodedData })
       .then(() => {
         clearCart();
         setStatus("success");

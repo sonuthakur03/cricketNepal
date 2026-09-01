@@ -254,6 +254,35 @@ const verifyEmail = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, message: 'Email verified successfully! You can now login.' });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// @desc    Upload avatar image
+// @route   PUT /api/auth/me/avatar
+// @access  Private
+// ─────────────────────────────────────────────────────────────────────────────
+const uploadAvatarImage = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    res.status(400);
+    throw new Error('Please upload an image');
+  }
+  const { cloudinary } = require('../config/cloudinary');
+
+  const user = await User.findById(req.user.id);
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  // Remove old avatar from Cloudinary if not default
+  if (user.avatar?.public_id && !user.avatar.public_id.includes('default')) {
+    await cloudinary.uploader.destroy(user.avatar.public_id).catch(() => {});
+  }
+
+  user.avatar = { public_id: req.file.filename, url: req.file.path };
+  await user.save();
+
+  res.status(200).json({ success: true, data: user.avatar });
+});
+
 module.exports = {
   register,
   login,
@@ -264,4 +293,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   verifyEmail,
+  uploadAvatarImage,
 };

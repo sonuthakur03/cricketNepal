@@ -6,10 +6,10 @@ const User = require("../models/User");
 const Product = require("../models/Product");
 const Order = require("../models/Order");
 
-const PLACEHOLDER_IMG = {
-  public_id: "cricketnepal/placeholder",
-  url: "https://placehold.co/800x800/16a34a/ffffff?text=CricketNepal",
-};
+const img = (name) => ({
+  public_id: `cricketnepal/${name}`,
+  url: `/images/products/${name}.jpg`,
+});
 
 // ── USERS ─────────────────────────────────────────
 const users = [
@@ -36,78 +36,122 @@ const users = [
   },
 ];
 
-// ── PRODUCTS ─────────────────────────────────────
+// ── PRODUCTS (No hyphens in text) ─────────────────
 const getProducts = (sellerId) => [
   {
     seller: sellerId,
-    name: "SG Nexus Plus English Willow Cricket Bat",
-    description: "Grade 1 English Willow bat for professional play.",
+    name: "Kookaburra Gold Edition English Willow Cricket Bat",
+    description: "Handcrafted Grade 1 English Willow cricket bat with balanced pickup and thick power edges for professional tournament matches.",
     price: 18500,
     discountPrice: 16999,
     category: "Bats",
-    brand: "SG",
-    images: [PLACEHOLDER_IMG],
+    brand: "Kookaburra",
+    images: [img("bat")],
     stock: 25,
     sizes: ["Short Handle", "Long Handle"],
     isFeatured: true,
   },
   {
     seller: sellerId,
-    name: "MRF Genius Grand Edition Bat",
-    description: "Kashmir Willow bat used by professionals.",
+    name: "SG Nexus Pro Kashmir Willow Cricket Bat",
+    description: "Premium Kashmir Willow bat selected for explosive stroke play with dynamic sweet spot.",
     price: 9500,
     discountPrice: 8499,
     category: "Bats",
-    brand: "MRF",
-    images: [PLACEHOLDER_IMG],
+    brand: "SG",
+    images: [img("bat")],
     stock: 40,
+    sizes: ["Short Handle", "Long Handle"],
+    isFeatured: true,
   },
   {
     seller: sellerId,
-    name: "Kookaburra Turf Cricket Ball",
-    description: "Official leather match ball.",
+    name: "The Master Series Red Leather Match Cricket Ball",
+    description: "Four piece alum tanned genuine leather match ball with hand stitched waxed linen seam.",
     price: 3200,
     discountPrice: 2799,
     category: "Balls",
     brand: "Kookaburra",
-    images: [PLACEHOLDER_IMG],
-    stock: 100,
+    images: [img("ball")],
+    stock: 120,
+    isFeatured: true,
   },
   {
     seller: sellerId,
-    name: "GM Prima Batting Gloves",
-    description: "Premium batting gloves.",
+    name: "Atlas Carbon Series Pro Batting Gloves",
+    description: "Ultra flex multi split finger protection with carbon fiber shield inserts and premium Pittards leather palm.",
     price: 4500,
     discountPrice: 3999,
     category: "Gloves",
     brand: "GM",
-    images: [PLACEHOLDER_IMG],
+    images: [img("gloves")],
     stock: 60,
     sizes: ["S", "M", "L", "XL"],
+    isFeatured: true,
   },
   {
     seller: sellerId,
-    name: "Masuri Vision Helmet",
-    description: "ICC approved cricket helmet.",
+    name: "Aurum Pro Air Lightweight Batting Leg Guards",
+    description: "High density molded foam lightweight batting pads with gold cane ribs and breathable gel knee cup.",
+    price: 6500,
+    discountPrice: 5899,
+    category: "Pads",
+    brand: "SS",
+    images: [img("pads")],
+    stock: 45,
+    sizes: ["M", "L"],
+    isFeatured: true,
+  },
+  {
+    seller: sellerId,
+    name: "Shrey Titanium Aerodynamic Cricket Helmet",
+    description: "ICC safety standard certified cricket helmet with high impact composite shell and gold titanium face grille.",
     price: 12000,
     discountPrice: 10999,
     category: "Helmets",
-    brand: "Masuri",
-    images: [PLACEHOLDER_IMG],
+    brand: "Shrey",
+    images: [img("helmet")],
     stock: 30,
     sizes: ["S", "M", "L"],
+    isFeatured: true,
   },
   {
     seller: sellerId,
-    name: "Nepal Cricket Jersey",
-    description: "Official Nepal cricket jersey.",
+    name: "Aura 77 Gold Spikes Turf Cricket Shoes",
+    description: "High performance cricket spikes with metal turf studs, cushioned EVA midsole and breathable athletic mesh.",
+    price: 8500,
+    discountPrice: 7499,
+    category: "Shoes",
+    brand: "Adidas",
+    images: [img("shoes")],
+    stock: 35,
+    sizes: ["7", "8", "9", "10", "11"],
+    isFeatured: true,
+  },
+  {
+    seller: sellerId,
+    name: "Pro Guard Elite Wheelie Cricket Kit Duffle Bag",
+    description: "Heavy duty ballistic cordura fabric kit bag with multi bat compartments, shoe tunnel and all terrain wheels.",
+    price: 9200,
+    discountPrice: 8299,
+    category: "Bags",
+    brand: "MRF",
+    images: [img("kitbag")],
+    stock: 20,
+    isFeatured: true,
+  },
+  {
+    seller: sellerId,
+    name: "Nepal National Team Supporters Cricket Jersey",
+    description: "Official performance athletic team jersey in breathable moisture wicking fabric with authentic gold national crest.",
     price: 2800,
     discountPrice: 2499,
     category: "Jerseys",
     brand: "Nepal Cricket",
-    images: [PLACEHOLDER_IMG],
+    images: [img("jersey")],
     stock: 150,
     sizes: ["S", "M", "L", "XL"],
+    isFeatured: true,
   },
 ];
 
@@ -133,12 +177,11 @@ const importData = async () => {
 
     const products = getProducts(sellerUser._id);
 
-    // IMPORTANT: use create (NOT insertMany)
     for (const product of products) {
       await Product.create(product);
     }
 
-    console.log(`✅ ${products.length} products seeded`);
+    console.log(`✅ ${products.length} products seeded with photorealistic images`);
 
     console.log("\n🎉 Database seeded successfully!\n");
 

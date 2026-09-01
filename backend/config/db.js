@@ -1,29 +1,33 @@
 // config/db.js
-// Handles MongoDB Atlas connection with retry logic
+// Handles MongoDB Atlas connection with automatic retry
 
 const mongoose = require('mongoose');
 
 const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
-      // These options are no longer needed in Mongoose 7+ but kept for clarity
-    });
+  const uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/cricketnepal';
+  
+  const connectWithRetry = async () => {
+    try {
+      const conn = await mongoose.connect(uri, {
+        serverSelectionTimeoutMS: 5000,
+      });
+      console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    } catch (error) {
+      console.error(`❌ MongoDB Connection Error (${error.message}). Retrying in 5 seconds...`);
+      setTimeout(connectWithRetry, 5000);
+    }
+  };
 
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+  // Handle connection events
+  mongoose.connection.on('error', (err) => {
+    console.error(`❌ MongoDB connection error: ${err.message || err}`);
+  });
 
-    // Handle connection events
-    mongoose.connection.on('error', (err) => {
-      console.error(`❌ MongoDB connection error: ${err}`);
-    });
+  mongoose.connection.on('disconnected', () => {
+    console.warn('⚠️  MongoDB disconnected. Attempting to reconnect...');
+  });
 
-    mongoose.connection.on('disconnected', () => {
-      console.warn('⚠️  MongoDB disconnected. Attempting to reconnect...');
-    });
-
-  } catch (error) {
-    console.error(`❌ MongoDB Connection Failed: ${error.message}`);
-    process.exit(1); // Exit process with failure
-  }
+  await connectWithRetry();
 };
 
 module.exports = connectDB;

@@ -6,6 +6,7 @@ const asyncHandler = require("express-async-handler");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const { deductOrderStock } = require("../utils/inventoryHelper");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // @desc  Create Stripe Payment Intent
@@ -105,6 +106,9 @@ const confirmStripePayment = asyncHandler(async (req, res) => {
     throw new Error("Payment intent does not match this order");
   }
 
+  // Atomically deduct inventory with overdraft prevention (ACID)
+  await deductOrderStock(order.orderItems);
+
   order.isPaid = true;
   order.paidAt = Date.now();
   order.orderStatus = "confirmed";
@@ -116,15 +120,6 @@ const confirmStripePayment = asyncHandler(async (req, res) => {
     verified_at: new Date(),
   };
   await order.save();
-
-  // Deduct stock
-  await Promise.all(
-    order.orderItems.map((item) =>
-      Product.findByIdAndUpdate(item.product, {
-        $inc: { stock: -item.quantity },
-      }),
-    ),
-  );
 
   res.status(200).json({ success: true, data: order });
 });
@@ -155,6 +150,7 @@ const stripeWebhook = asyncHandler(async (req, res) => {
     const pi = event.data.object;
     const order = await Order.findById(pi.metadata.orderId);
     if (order && !order.isPaid) {
+      await deductOrderStock(order.orderItems);
       order.isPaid = true;
       order.paidAt = Date.now();
       order.orderStatus = "confirmed";
@@ -166,13 +162,6 @@ const stripeWebhook = asyncHandler(async (req, res) => {
         verified_at: new Date(),
       };
       await order.save();
-      await Promise.all(
-        order.orderItems.map((i) =>
-          Product.findByIdAndUpdate(i.product, {
-            $inc: { stock: -i.quantity },
-          }),
-        ),
-      );
     }
   }
 

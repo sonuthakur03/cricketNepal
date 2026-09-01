@@ -170,7 +170,9 @@ productSchema.index({
   tags: "text",
 });
 
+productSchema.index({ slug: 1 }, { unique: true });
 productSchema.index({ category: 1, brand: 1, price: 1 });
 productSchema.index({ seller: 1 });
+productSchema.index({ isActive: 1, isFeatured: 1 });
 
 module.exports = mongoose.model("Product", productSchema);

@@ -1,21 +1,41 @@
-// src/pages/AdminDashboard.jsx
+// src/pages/AdminDashboard.jsx — Luxury Admin Command Center with secure controls & dark/light styling
+
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import {
+  HiOutlineUsers,
+  HiOutlineCube,
+  HiOutlineShoppingBag,
+  HiOutlineCurrencyDollar,
+  HiOutlineSearch,
+  HiOutlinePlus,
+  HiOutlineShieldCheck,
+  HiOutlineBan,
+  HiOutlineTrash,
+  HiStar,
+  HiOutlineEye,
+} from 'react-icons/hi'
 import api from '../utils/api'
 import { formatPrice, formatDate, getOrderStatusConfig, getErrorMessage } from '../utils/helpers'
 import { TableSkeleton, Pagination } from '../components/common/UI'
 
 function StatCard({ label, value, icon, sub }) {
   return (
-    <div className="card p-5">
+    <div className="card-glass p-5 rounded-2xl" style={{ border: '1px solid var(--border)' }}>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm text-[var(--color-text-muted)] mb-1">{label}</p>
-          <p className="text-2xl font-black" style={{ fontFamily: 'Syne, sans-serif' }}>{value}</p>
-          {sub && <p className="text-xs text-primary-500 mt-0.5">{sub}</p>}
+          <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-heading)' }}>
+            {label}
+          </p>
+          <p className="text-2xl font-bold" style={{ color: 'var(--gold-400)', fontFamily: 'var(--font-mono)' }}>
+            {value}
+          </p>
+          {sub && <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>{sub}</p>}
         </div>
-        <span className="text-3xl">{icon}</span>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(201,162,39,0.15)', color: 'var(--gold-400)' }}>
+          {icon}
+        </div>
       </div>
     </div>
   )
@@ -69,13 +89,13 @@ export default function AdminDashboard() {
   const handleToggleUser = async (userId, currentStatus) => {
     try {
       await api.put(`/admin/users/${userId}`, { isActive: !currentStatus })
-      toast.success('User updated')
+      toast.success('User status updated')
       fetchTab()
     } catch (err) { toast.error(getErrorMessage(err)) }
   }
 
   const handleDeleteUser = async (userId, name) => {
-    if (!window.confirm(`Delete user "${name}"? This action cannot be undone.`)) return
+    if (!window.confirm(`Permanently delete account "${name}"? This action cannot be undone.`)) return
     try {
       await api.delete(`/admin/users/${userId}`)
       toast.success('User deleted')
@@ -94,7 +114,7 @@ export default function AdminDashboard() {
   const handleToggleFeatured = async (productId) => {
     try {
       await api.put(`/admin/products/${productId}/featured`)
-      toast.success('Featured status toggled')
+      toast.success('Featured status updated')
       fetchTab()
     } catch (err) { toast.error(getErrorMessage(err)) }
   }
@@ -108,18 +128,43 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="page-container pt-24 py-12 min-h-screen">
-      <h1 className="text-3xl font-black mb-6" style={{ fontFamily: 'Syne, sans-serif' }}>Admin Dashboard</h1>
+    <div className="page-container pt-24 py-12 min-h-screen" style={{ background: 'var(--bg-primary)' }}>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+        <div>
+          <span className="badge badge-gold text-xs font-bold uppercase tracking-wider mb-1">
+            Master Operations
+          </span>
+          <h1 className="text-3xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
+            Admin Command Center
+          </h1>
+        </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-8 overflow-x-auto border-b border-[var(--color-border)] pb-0">
+        <Link
+          to="/admin/products/new"
+          className="btn-primary inline-flex items-center gap-2 py-2.5 px-5 text-xs font-bold self-start sm:self-auto"
+        >
+          <HiOutlinePlus className="w-4 h-4" /> Add New Equipment
+        </Link>
+      </div>
+
+      {/* Tabs Navigation */}
+      <div className="flex gap-2 mb-8 overflow-x-auto pb-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
         {ADMIN_TABS.map((t) => (
-          <button key={t.key} onClick={() => { setTab(t.key); setPage(1) }}
-            className={`px-5 py-2.5 text-sm font-semibold whitespace-nowrap -mb-px border-b-2 transition-colors ${
+          <button
+            key={t.key}
+            onClick={() => { setTab(t.key); setPage(1) }}
+            className={`px-5 py-2.5 text-xs font-bold rounded-xl whitespace-nowrap transition-all ${
               tab === t.key
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
-            }`} style={{ fontFamily: 'Syne, sans-serif' }}>
+                ? 'bg-gold-500 text-black shadow-lg shadow-gold-500/20'
+                : 'hover:bg-white/5 text-muted hover:text-white'
+            }`}
+            style={{
+              background: tab === t.key ? 'var(--gold-400)' : 'transparent',
+              color: tab === t.key ? '#080808' : 'var(--text-secondary)',
+              fontFamily: 'var(--font-heading)',
+            }}
+          >
             {t.icon} {t.label}
           </button>
         ))}
@@ -127,51 +172,68 @@ export default function AdminDashboard() {
 
       {loading ? <TableSkeleton rows={8} /> : (
         <>
-          {/* ── Overview ── */}
+          {/* ── Tab: Overview ── */}
           {tab === 'overview' && stats && (
             <div className="space-y-8">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <StatCard label="Total Users"    value={stats.totalUsers}    icon="👥" />
-                <StatCard label="Total Sellers"  value={stats.totalSellers}  icon="🏪" />
-                <StatCard label="Total Products" value={stats.totalProducts} icon="📦" />
-                <StatCard label="Total Revenue"  value={formatPrice(stats.totalRevenue || 0)} icon="💰" />
+                <StatCard label="Total Users"    value={stats.totalUsers}    icon={<HiOutlineUsers className="w-5 h-5" />} />
+                <StatCard label="Active Sellers" value={stats.totalSellers}  icon={<HiOutlineShieldCheck className="w-5 h-5" />} />
+                <StatCard label="Equipment Items" value={stats.totalProducts} icon={<HiOutlineCube className="w-5 h-5" />} />
+                <StatCard label="Gross Volume"  value={formatPrice(stats.totalRevenue || 0)} icon={<HiOutlineCurrencyDollar className="w-5 h-5" />} />
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
                 {/* Recent Orders */}
-                <div className="card p-5">
-                  <h2 className="font-bold mb-4" style={{ fontFamily: 'Syne, sans-serif' }}>Recent Orders</h2>
+                <div className="card-glass p-6 rounded-2xl" style={{ border: '1px solid var(--border)' }}>
+                  <h2 className="font-bold text-base mb-4" style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
+                    Recent Orders
+                  </h2>
                   <div className="space-y-3">
                     {stats.recentOrders?.map((o) => {
                       const { label, color } = getOrderStatusConfig(o.orderStatus)
                       return (
-                        <div key={o._id} className="flex items-center justify-between text-sm">
+                        <div key={o._id} className="flex items-center justify-between text-xs p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)' }}>
                           <div>
-                            <p className="font-semibold font-mono text-xs">#{o._id.slice(-8).toUpperCase()}</p>
-                            <p className="text-[var(--color-text-muted)] text-xs">{o.user?.name}</p>
+                            <p className="font-bold font-mono text-[11px]" style={{ color: 'var(--gold-400)' }}>
+                              #{o._id.slice(-8).toUpperCase()}
+                            </p>
+                            <p className="text-muted mt-0.5">{o.user?.name}</p>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold text-primary-600">{formatPrice(o.totalPrice)}</p>
-                            <span className={`${color} text-xs`}>{label}</span>
+                            <p className="font-bold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+                              {formatPrice(o.totalPrice)}
+                            </p>
+                            <span className={`badge ${color} text-[10px] mt-1`}>{label}</span>
                           </div>
                         </div>
                       )
                     })}
                   </div>
                 </div>
-                {/* Top Products */}
-                <div className="card p-5">
-                  <h2 className="font-bold mb-4" style={{ fontFamily: 'Syne, sans-serif' }}>Top Products</h2>
+
+                {/* Top Equipment */}
+                <div className="card-glass p-6 rounded-2xl" style={{ border: '1px solid var(--border)' }}>
+                  <h2 className="font-bold text-base mb-4" style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
+                    Top Performing Equipment
+                  </h2>
                   <div className="space-y-3">
                     {stats.topProducts?.map((p) => (
-                      <div key={p._id} className="flex items-center gap-3 text-sm">
-                        <img src={p.images?.[0]?.url} alt={p.name}
-                          className="w-9 h-9 rounded-lg object-cover bg-slate-100 dark:bg-slate-800 flex-shrink-0" />
+                      <div key={p._id} className="flex items-center gap-3 text-xs p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)' }}>
+                        <img
+                          src={p.images?.[0]?.url || '/images/products/bat.jpg'}
+                          alt={p.name}
+                          className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+                          style={{ border: '1px solid var(--border-subtle)' }}
+                        />
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold line-clamp-1">{p.name}</p>
-                          <p className="text-xs text-[var(--color-text-muted)]">⭐ {p.rating?.toFixed(1)} · {p.numReviews} reviews</p>
+                          <p className="font-bold line-clamp-1" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>
+                            {p.name}
+                          </p>
+                          <p className="text-[11px] text-muted mt-0.5">⭐ {p.rating?.toFixed(1)} · {p.numReviews} reviews</p>
                         </div>
-                        <p className="font-bold text-primary-600 flex-shrink-0">{formatPrice(p.price)}</p>
+                        <p className="font-bold flex-shrink-0" style={{ color: 'var(--gold-400)', fontFamily: 'var(--font-mono)' }}>
+                          {formatPrice(p.price)}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -180,44 +242,51 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* ── Users ── */}
+          {/* ── Tab: Users ── */}
           {tab === 'users' && (
             <>
               <div className="mb-4">
-                <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-                  placeholder="Search by name or email..."
-                  className="input max-w-sm text-sm py-2.5"
-                  onKeyDown={(e) => e.key === 'Enter' && fetchTab()}
-                />
+                <div className="relative max-w-sm">
+                  <HiOutlineSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-muted w-4 h-4" />
+                  <input
+                    value={search}
+                    onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+                    placeholder="Search by player name or email..."
+                    className="input pl-9 text-xs py-2.5"
+                    onKeyDown={(e) => e.key === 'Enter' && fetchTab()}
+                  />
+                </div>
               </div>
-              <div className="card overflow-hidden overflow-x-auto">
-                <table className="w-full text-sm min-w-[700px]">
-                  <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-[var(--color-border)]">
+
+              <div className="card-glass rounded-2xl overflow-hidden overflow-x-auto" style={{ border: '1px solid var(--border)' }}>
+                <table className="w-full text-xs min-w-[700px]">
+                  <thead style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border-subtle)' }}>
                     <tr>
                       {['User', 'Email', 'Role', 'Joined', 'Status', 'Actions'].map((h) => (
-                        <th key={h} className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide text-[var(--color-text-muted)]">{h}</th>
+                        <th key={h} className="text-left px-4 py-3 font-bold uppercase tracking-wider text-muted text-[10px]">{h}</th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[var(--color-border)]">
+                  <tbody className="divide-y divide-white/5">
                     {users.map((u) => (
-                      <tr key={u._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                      <tr key={u._id} className="hover:bg-white/[0.02] transition-colors">
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <img src={u.avatar?.url} alt={u.name}
-                              className="w-7 h-7 rounded-full object-cover bg-slate-200 flex-shrink-0" />
-                            <span className="font-medium">{u.name}</span>
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center font-bold text-xs" style={{ color: 'var(--gold-400)' }}>
+                              {u.name?.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{u.name}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-[var(--color-text-muted)]">{u.email}</td>
+                        <td className="px-4 py-3 text-muted">{u.email}</td>
                         <td className="px-4 py-3">
-                          <span className={u.role === 'admin' ? 'badge-red' : u.role === 'seller' ? 'badge-gold' : 'badge-green'}>
+                          <span className={`badge ${u.role === 'admin' ? 'badge-red' : u.role === 'seller' ? 'badge-gold' : 'badge-green'} text-[10px]`}>
                             {u.role}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-[var(--color-text-muted)] text-xs">{formatDate(u.createdAt)}</td>
+                        <td className="px-4 py-3 text-muted">{formatDate(u.createdAt)}</td>
                         <td className="px-4 py-3">
-                          <span className={u.isActive ? 'badge-green' : 'badge-red'}>
+                          <span className={`badge ${u.isActive ? 'badge-green' : 'badge-red'} text-[10px]`}>
                             {u.isActive ? 'Active' : 'Suspended'}
                           </span>
                         </td>
@@ -225,16 +294,18 @@ export default function AdminDashboard() {
                           <div className="flex gap-2">
                             {u.role !== 'admin' && (
                               <>
-                                <button onClick={() => handleToggleUser(u._id, u.isActive)}
-                                  className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-colors ${
-                                    u.isActive
-                                      ? 'text-amber-600 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20'
-                                      : 'text-green-600 bg-green-50 hover:bg-green-100 dark:bg-green-900/20'
-                                  }`}>
+                                <button
+                                  onClick={() => handleToggleUser(u._id, u.isActive)}
+                                  className="text-[11px] px-2.5 py-1 rounded-lg font-semibold transition-colors hover:bg-white/10"
+                                  style={{ color: u.isActive ? '#f59e0b' : '#22c55e', border: '1px solid var(--border-subtle)' }}
+                                >
                                   {u.isActive ? 'Suspend' : 'Activate'}
                                 </button>
-                                <button onClick={() => handleDeleteUser(u._id, u.name)}
-                                  className="text-xs px-2.5 py-1 rounded-lg font-medium text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 transition-colors">
+                                <button
+                                  onClick={() => handleDeleteUser(u._id, u.name)}
+                                  className="text-[11px] px-2.5 py-1 rounded-lg font-semibold text-red-400 hover:bg-red-500/10 transition-colors"
+                                  style={{ border: '1px solid rgba(239,68,68,0.2)' }}
+                                >
                                   Delete
                                 </button>
                               </>
@@ -250,54 +321,89 @@ export default function AdminDashboard() {
             </>
           )}
 
-          {/* ── Products ── */}
+          {/* ── Tab: Products ── */}
           {tab === 'products' && (
             <>
-              <div className="mb-4">
-                <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-                  placeholder="Search products..."
-                  className="input max-w-sm text-sm py-2.5" />
+              <div className="flex justify-between items-center mb-4">
+                <div className="relative max-w-sm flex-1">
+                  <HiOutlineSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-muted w-4 h-4" />
+                  <input
+                    value={search}
+                    onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+                    placeholder="Search equipment catalog..."
+                    className="input pl-9 text-xs py-2.5"
+                  />
+                </div>
+                <Link to="/admin/products/new" className="btn-primary text-xs py-2.5 px-4 inline-flex items-center gap-1">
+                  <HiOutlinePlus className="w-4 h-4" /> New Equipment
+                </Link>
               </div>
-              <div className="card overflow-hidden overflow-x-auto">
-                <table className="w-full text-sm min-w-[700px]">
-                  <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-[var(--color-border)]">
+
+              <div className="card-glass rounded-2xl overflow-hidden overflow-x-auto" style={{ border: '1px solid var(--border)' }}>
+                <table className="w-full text-xs min-w-[700px]">
+                  <thead style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border-subtle)' }}>
                     <tr>
-                      {['Product', 'Seller', 'Category', 'Price', 'Stock', 'Featured', 'Actions'].map((h) => (
-                        <th key={h} className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide text-[var(--color-text-muted)]">{h}</th>
+                      {['Equipment', 'Seller', 'Category', 'Price', 'Stock', 'Featured', 'Actions'].map((h) => (
+                        <th key={h} className="text-left px-4 py-3 font-bold uppercase tracking-wider text-muted text-[10px]">{h}</th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[var(--color-border)]">
+                  <tbody className="divide-y divide-white/5">
                     {products.map((p) => (
-                      <tr key={p._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                      <tr key={p._id} className="hover:bg-white/[0.02] transition-colors">
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <img src={p.images?.[0]?.url} alt={p.name}
-                              className="w-9 h-9 rounded-lg object-cover bg-slate-100 flex-shrink-0" />
-                            <span className="font-medium line-clamp-1 max-w-[180px]">{p.name}</span>
+                          <div className="flex items-center gap-2.5">
+                            <img
+                              src={p.images?.[0]?.url || '/images/products/bat.jpg'}
+                              alt={p.name}
+                              className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
+                              style={{ border: '1px solid var(--border-subtle)' }}
+                            />
+                            <span className="font-bold line-clamp-1 max-w-[180px]" style={{ color: 'var(--text-primary)' }}>
+                              {p.name}
+                            </span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-[var(--color-text-muted)] text-xs">{p.seller?.name}</td>
-                        <td className="px-4 py-3 text-[var(--color-text-muted)]">{p.category}</td>
-                        <td className="px-4 py-3 font-semibold text-primary-600">{formatPrice(p.price)}</td>
-                        <td className="px-4 py-3">
-                          <span className={p.stock > 0 ? 'badge-green' : 'badge-red'}>{p.stock}</span>
+                        <td className="px-4 py-3 text-muted">{p.seller?.name}</td>
+                        <td className="px-4 py-3 text-muted">{p.category}</td>
+                        <td className="px-4 py-3 font-bold" style={{ color: 'var(--gold-400)', fontFamily: 'var(--font-mono)' }}>
+                          {formatPrice(p.price)}
                         </td>
                         <td className="px-4 py-3">
-                          <button onClick={() => handleToggleFeatured(p._id)}
-                            className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-colors ${
-                              p.isFeatured
-                                ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/20'
-                                : 'text-slate-500 bg-slate-100 dark:bg-slate-800'
-                            }`}>
+                          <span className={`badge ${p.stock > 0 ? 'badge-green' : 'badge-red'} text-[10px]`}>
+                            {p.stock} in stock
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => handleToggleFeatured(p._id)}
+                            className="text-[10px] font-bold px-2.5 py-1 rounded-lg transition-colors"
+                            style={{
+                              background: p.isFeatured ? 'rgba(201,162,39,0.2)' : 'rgba(255,255,255,0.05)',
+                              color: p.isFeatured ? 'var(--gold-300)' : 'var(--text-muted)',
+                              border: '1px solid var(--border-subtle)',
+                            }}
+                          >
                             {p.isFeatured ? '⭐ Featured' : 'Set Featured'}
                           </button>
                         </td>
                         <td className="px-4 py-3">
-                          <Link to={`/products/${p._id}`}
-                            className="text-xs px-2.5 py-1 rounded-lg font-medium text-primary-600 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 transition-colors">
-                            View
-                          </Link>
+                          <div className="flex gap-2">
+                            <Link
+                              to={`/admin/products/edit/${p._id}`}
+                              className="text-[11px] px-2.5 py-1 rounded-lg font-semibold text-gold-400 hover:bg-gold-500/10 transition-colors"
+                              style={{ border: '1px solid var(--border)' }}
+                            >
+                              Edit
+                            </Link>
+                            <Link
+                              to={`/products/${p.slug || p._id}`}
+                              className="text-[11px] px-2.5 py-1 rounded-lg font-semibold text-muted hover:text-white transition-colors"
+                              style={{ border: '1px solid var(--border-subtle)' }}
+                            >
+                              View
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -308,38 +414,49 @@ export default function AdminDashboard() {
             </>
           )}
 
-          {/* ── Orders ── */}
+          {/* ── Tab: Orders ── */}
           {tab === 'orders' && (
             <>
-              <div className="card overflow-hidden overflow-x-auto">
-                <table className="w-full text-sm min-w-[800px]">
-                  <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-[var(--color-border)]">
+              <div className="card-glass rounded-2xl overflow-hidden overflow-x-auto" style={{ border: '1px solid var(--border)' }}>
+                <table className="w-full text-xs min-w-[800px]">
+                  <thead style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border-subtle)' }}>
                     <tr>
                       {['Order ID', 'Customer', 'Date', 'Total', 'Payment', 'Status', 'Update Status'].map((h) => (
-                        <th key={h} className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide text-[var(--color-text-muted)]">{h}</th>
+                        <th key={h} className="text-left px-4 py-3 font-bold uppercase tracking-wider text-muted text-[10px]">{h}</th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[var(--color-border)]">
+                  <tbody className="divide-y divide-white/5">
                     {orders.map((o) => {
                       const { label, color } = getOrderStatusConfig(o.orderStatus)
                       return (
-                        <tr key={o._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                          <td className="px-4 py-3 font-mono text-xs">#{o._id.slice(-8).toUpperCase()}</td>
-                          <td className="px-4 py-3">{o.user?.name}</td>
-                          <td className="px-4 py-3 text-[var(--color-text-muted)] text-xs">{formatDate(o.createdAt)}</td>
-                          <td className="px-4 py-3 font-semibold text-primary-600">{formatPrice(o.totalPrice)}</td>
+                        <tr key={o._id} className="hover:bg-white/[0.02] transition-colors">
+                          <td className="px-4 py-3 font-mono font-bold" style={{ color: 'var(--gold-400)' }}>
+                            #{o._id.slice(-8).toUpperCase()}
+                          </td>
+                          <td className="px-4 py-3 font-semibold" style={{ color: 'var(--text-primary)' }}>{o.user?.name}</td>
+                          <td className="px-4 py-3 text-muted">{formatDate(o.createdAt)}</td>
+                          <td className="px-4 py-3 font-bold" style={{ color: 'var(--gold-400)', fontFamily: 'var(--font-mono)' }}>
+                            {formatPrice(o.totalPrice)}
+                          </td>
                           <td className="px-4 py-3">
-                            <span className={o.isPaid ? 'badge-green' : 'badge-gold'}>
+                            <span className={`badge ${o.isPaid ? 'badge-green' : 'badge-gold'} text-[10px] uppercase font-bold`}>
                               {o.isPaid ? `✓ ${o.paymentMethod}` : `⏳ ${o.paymentMethod}`}
                             </span>
                           </td>
-                          <td className="px-4 py-3"><span className={color}>{label}</span></td>
+                          <td className="px-4 py-3"><span className={`badge ${color} text-[10px]`}>{label}</span></td>
                           <td className="px-4 py-3">
                             <select
                               value={o.orderStatus}
                               onChange={(e) => handleOrderStatus(o._id, e.target.value)}
-                              className="text-xs border border-[var(--color-border)] rounded-lg px-2 py-1 bg-[var(--color-bg)] focus:outline-none focus:ring-1 focus:ring-primary-500">
+                              className="text-xs rounded-xl px-2.5 py-1 focus:outline-none"
+                              style={{
+                                background: 'var(--bg-secondary)',
+                                border: '1px solid var(--border)',
+                                color: 'var(--text-primary)',
+                                fontFamily: 'var(--font-heading)',
+                              }}
+                            >
                               {['pending','confirmed','processing','shipped','delivered','cancelled'].map((s) => (
                                 <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
                               ))}
@@ -355,45 +472,51 @@ export default function AdminDashboard() {
             </>
           )}
 
-          {/* ── Sellers ── */}
+          {/* ── Tab: Sellers ── */}
           {tab === 'sellers' && (
-            <div className="card overflow-hidden overflow-x-auto">
-              <table className="w-full text-sm min-w-[700px]">
-                <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-[var(--color-border)]">
+            <div className="card-glass rounded-2xl overflow-hidden overflow-x-auto" style={{ border: '1px solid var(--border)' }}>
+              <table className="w-full text-xs min-w-[700px]">
+                <thead style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border-subtle)' }}>
                   <tr>
-                    {['Seller', 'Store Name', 'Email', 'Joined', 'Approved', 'Actions'].map((h) => (
-                      <th key={h} className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide text-[var(--color-text-muted)]">{h}</th>
+                    {['Seller', 'Store Name', 'Email', 'Joined', 'Status', 'Actions'].map((h) => (
+                      <th key={h} className="text-left px-4 py-3 font-bold uppercase tracking-wider text-muted text-[10px]">{h}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[var(--color-border)]">
+                <tbody className="divide-y divide-white/5">
                   {sellers.map((s) => (
-                    <tr key={s._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                    <tr key={s._id} className="hover:bg-white/[0.02] transition-colors">
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <img src={s.avatar?.url} alt={s.name}
-                            className="w-7 h-7 rounded-full object-cover bg-slate-200 flex-shrink-0" />
-                          <span className="font-medium">{s.name}</span>
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center font-bold text-xs" style={{ color: 'var(--gold-400)' }}>
+                            {s.name?.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{s.name}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-[var(--color-text-muted)]">{s.sellerInfo?.storeName || '—'}</td>
-                      <td className="px-4 py-3 text-[var(--color-text-muted)]">{s.email}</td>
-                      <td className="px-4 py-3 text-[var(--color-text-muted)] text-xs">{formatDate(s.createdAt)}</td>
+                      <td className="px-4 py-3 text-muted">{s.sellerInfo?.storeName || '—'}</td>
+                      <td className="px-4 py-3 text-muted">{s.email}</td>
+                      <td className="px-4 py-3 text-muted">{formatDate(s.createdAt)}</td>
                       <td className="px-4 py-3">
-                        <span className={s.sellerInfo?.isApproved ? 'badge-green' : 'badge-red'}>
-                          {s.sellerInfo?.isApproved ? '✓ Approved' : '⏳ Pending'}
+                        <span className={`badge ${s.sellerInfo?.isApproved ? 'badge-green' : 'badge-red'} text-[10px]`}>
+                          {s.sellerInfo?.isApproved ? '✓ Verified Partner' : '⏳ Pending Approval'}
                         </span>
                       </td>
                       <td className="px-4 py-3">
                         {s.sellerInfo?.isApproved ? (
-                          <button onClick={() => handleApproveSeller(s._id, false)}
-                            className="text-xs px-2.5 py-1 rounded-lg font-medium text-red-600 bg-red-50 dark:bg-red-900/20 transition-colors">
+                          <button
+                            onClick={() => handleApproveSeller(s._id, false)}
+                            className="text-[11px] px-2.5 py-1 rounded-lg font-semibold text-red-400 hover:bg-red-500/10 transition-colors"
+                            style={{ border: '1px solid rgba(239,68,68,0.2)' }}
+                          >
                             Revoke
                           </button>
                         ) : (
-                          <button onClick={() => handleApproveSeller(s._id, true)}
-                            className="text-xs px-2.5 py-1 rounded-lg font-medium text-green-600 bg-green-50 dark:bg-green-900/20 transition-colors">
-                            Approve
+                          <button
+                            onClick={() => handleApproveSeller(s._id, true)}
+                            className="btn-primary text-[11px] py-1 px-3"
+                          >
+                            Approve Partner
                           </button>
                         )}
                       </td>

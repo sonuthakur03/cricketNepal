@@ -9,11 +9,12 @@ const {
   deleteProduct,
   deleteProductImage,
   addReview,
+  canReviewProduct,
   deleteReview,
   getProductMeta,
   getMyProducts,
 } = require("../controllers/productController");
-const { protect, authorize } = require("../middleware/auth");
+const { protect, authorize, optionalAuth } = require("../middleware/auth");
 const { uploadProductImage } = require("../config/cloudinary");
 
 // ── IMPORTANT: specific named routes MUST come before /:id routes ──
@@ -41,7 +42,7 @@ router.post(
 
 // Public list + single product (/:id must come AFTER all named routes)
 router.get("/", getProducts);
-router.get("/:id", getProduct);
+router.get("/:id", optionalAuth, getProduct);
 
 // Update / Delete product
 router.put(
@@ -60,6 +61,7 @@ router.delete(
 );
 
 // Reviews
+router.get("/:id/can-review", protect, canReviewProduct);
 router.post("/:id/reviews", protect, authorize("user", "admin"), addReview);
 router.delete("/:id/reviews/:reviewId", protect, deleteReview);
 

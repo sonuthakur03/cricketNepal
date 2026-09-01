@@ -4,6 +4,7 @@ const axios = require("axios");
 const crypto = require("crypto");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const { deductOrderStock } = require("../utils/inventoryHelper");
 
 const generateEsewaSignature = (message, secretKey) =>
   crypto.createHmac("sha256", secretKey).update(message).digest("base64");
@@ -173,6 +174,9 @@ const verifyEsewaPayment = asyncHandler(async (req, res) => {
     );
   }
 
+  // Atomically deduct inventory with overdraft prevention (ACID)
+  await deductOrderStock(order.orderItems);
+
   // Mark order paid
   order.isPaid = true;
   order.paidAt = Date.now();
@@ -186,14 +190,6 @@ const verifyEsewaPayment = asyncHandler(async (req, res) => {
     esewa_ref_id: esewaStatus.ref_id || transaction_code || "",
   };
   await order.save();
-
-  await Promise.all(
-    order.orderItems.map((item) =>
-      Product.findByIdAndUpdate(item.product, {
-        $inc: { stock: -item.quantity },
-      }),
-    ),
-  );
 
   res
     .status(200)

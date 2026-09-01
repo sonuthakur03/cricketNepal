@@ -15,8 +15,11 @@ import ProductDetailPage from "./pages/ProductDetailPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import { LoginPage, RegisterPage } from "./pages/AuthPages";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import OrdersPage from "./pages/OrdersPage";
-import WishlistPage, { AboutPage } from "./pages/WishlistPage";
+import WishlistPage from "./pages/WishlistPage";
+import AboutPage from "./pages/AboutPage";
 import ProfilePage from "./pages/ProfilePage";
 import SellerDashboard from "./pages/SellerDashboard";
 import ProductFormPage from "./pages/ProductFormPage";
@@ -133,8 +136,9 @@ export default function App() {
             {/* Auth pages — no navbar */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
-            <Route path="/reset-password/:token" element={<LoginPage />} />
+            <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
             {/* Protected */}
             <Route
@@ -214,7 +218,17 @@ export default function App() {
               }
             />
 
-            {/* Seller */}
+            {/* Seller Dashboard Routes */}
+            <Route
+              path="/seller"
+              element={
+                <ProtectedRoute roles={["seller", "admin"]}>
+                  <PageTransition>
+                    <SellerDashboard />
+                  </PageTransition>
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/seller/dashboard"
               element={
@@ -246,13 +260,43 @@ export default function App() {
               }
             />
 
-            {/* Admin */}
+            {/* Admin Dashboard Routes */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute roles={["admin"]}>
+                  <PageTransition>
+                    <AdminDashboard />
+                  </PageTransition>
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/admin/dashboard"
               element={
                 <ProtectedRoute roles={["admin"]}>
                   <PageTransition>
                     <AdminDashboard />
+                  </PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/products/new"
+              element={
+                <ProtectedRoute roles={["admin"]}>
+                  <PageTransition>
+                    <ProductFormPage />
+                  </PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/products/edit/:id"
+              element={
+                <ProtectedRoute roles={["admin"]}>
+                  <PageTransition>
+                    <ProductFormPage />
                   </PageTransition>
                 </ProtectedRoute>
               }

@@ -1,648 +1,612 @@
-// src/pages/HomePage.jsx
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import {
-  HiArrowRight,
-  HiOutlineTruck,
-  HiOutlineShieldCheck,
-  HiOutlineCreditCard,
-  HiOutlinePhone,
-} from "react-icons/hi";
-import api from "../utils/api";
-import { getErrorMessage } from "../utils/helpers";
-import ProductCard from "../components/product/ProductCard";
-import { ProductCardSkeleton } from "../components/common/UI";
+// src/pages/HomePage.jsx — Premium redesign with CricketHero3D, Bebas Neue + Outfit typography, clean hyphen-free copy
 
-// ── Category data ─────────────────────────────────────────────────────────────
-const CATEGORIES = [
-  { name: "Bats", emoji: "🏏", color: "from-green-500 to-emerald-600" },
-  { name: "Balls", emoji: "🔴", color: "from-red-500 to-rose-600" },
-  { name: "Gloves", emoji: "🧤", color: "from-blue-500 to-blue-600" },
-  { name: "Helmets", emoji: "⛑️", color: "from-amber-500 to-orange-600" },
-  { name: "Jerseys", emoji: "👕", color: "from-purple-500 to-violet-600" },
-  { name: "Shoes", emoji: "👟", color: "from-cyan-500 to-sky-600" },
-  { name: "Pads", emoji: "🦵", color: "from-teal-500 to-teal-600" },
-  { name: "Accessories", emoji: "🎒", color: "from-pink-500 to-pink-600" },
-];
+import { useRef, useEffect, useState, lazy, Suspense } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { motion, useScroll, useTransform } from 'framer-motion'
+import { HiArrowRight, HiStar, HiOutlineArrowRight } from 'react-icons/hi'
+import api from '../utils/api'
+import { formatPrice } from '../utils/helpers'
+import { StarRating } from '../components/common/UI'
+import useCartStore from '../context/cartStore'
+import useAuthStore from '../context/authStore'
+import toast from 'react-hot-toast'
 
-const FEATURES = [
-  {
-    icon: HiOutlineTruck,
-    title: "Free Delivery",
-    desc: "On orders above NPR 5,000",
-  },
-  {
-    icon: HiOutlineShieldCheck,
-    title: "Genuine Products",
-    desc: "100% authentic gear",
-  },
-  {
-    icon: HiOutlineCreditCard,
-    title: "Secure Payment",
-    desc: "Khalti & eSewa accepted",
-  },
-  {
-    icon: HiOutlinePhone,
-    title: "24/7 Support",
-    desc: "We're always here for you",
-  },
-];
+// Lazy load 3D Website Logo Emblem
+const PitchNepalLogo3D = lazy(() => import('../components/three/PitchNepalLogo3D'))
 
-// ── Hero Section ──────────────────────────────────────────────────────────────
-function HeroSection() {
+/* ── Animated counter ─────────────────────────────────────────── */
+function Counter({ end, suffix = '', duration = 2 }) {
+  const [count, setCount] = useState(0)
+  const ref = useRef(null)
+  const [started, setStarted] = useState(false)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([e]) => { if (e.isIntersecting) setStarted(true) }, { threshold: 0.5 })
+    if (ref.current) observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (!started) return
+    const step = end / (duration * 60)
+    let current = 0
+    const timer = setInterval(() => {
+      current = Math.min(current + step, end)
+      setCount(Math.floor(current))
+      if (current >= end) clearInterval(timer)
+    }, 1000 / 60)
+    return () => clearInterval(timer)
+  }, [started, end, duration])
+
+  return <span ref={ref}>{count.toLocaleString()}{suffix}</span>
+}
+
+/* ── Product Card (redesigned) ───────────────────────────────── */
+function ProductCard({ product, index = 0 }) {
+  const [hovered, setHovered] = useState(false)
+  const addItem = useCartStore((s) => s.addItem)
+  const finalPrice = product.discountPrice > 0 ? product.discountPrice : product.price
+  const hasDiscount = product.discountPrice > 0
+  const discount = hasDiscount ? Math.round(((product.price - product.discountPrice) / product.price) * 100) : 0
+
   return (
-    <section
-      className="relative min-h-[95vh] flex items-center overflow-hidden"
-      style={{
-        background:
-          "linear-gradient(135deg, #0d0d0a 0%, #1a1a14 45%, #0f1a0e 100%)",
-      }}
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-50px' }}
+      transition={{ duration: 0.5, delay: index * 0.08 }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="group relative"
+      style={{ perspective: '1000px' }}
     >
-      {/* Dot pattern overlay */}
-      <div
-        className="absolute inset-0 opacity-20"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle, #D4A843 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
-
-      {/* Green glow orbs */}
-      <div
-        className="absolute top-1/3 right-1/3 w-[500px] h-[500px] rounded-full blur-3xl opacity-20 animate-pulse"
-        style={{ background: "radial-gradient(circle, #16a34a, transparent)" }}
-      />
-      <div
-        className="absolute bottom-1/4 left-1/4 w-64 h-64 rounded-full blur-3xl opacity-15 animate-pulse"
-        style={{
-          background: "radial-gradient(circle, #D4A843, transparent)",
-          animationDelay: "1.5s",
-        }}
-      />
-
-      <div className="page-container relative z-10 py-24 grid lg:grid-cols-2 gap-16 items-center">
-        {/* ── Left: Text ── */}
-        <motion.div
-          initial={{ opacity: 0, x: -40 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border text-sm font-semibold mb-8"
-            style={{
-              borderColor: "rgba(212,168,67,0.4)",
-              background: "rgba(212,168,67,0.08)",
-              color: "#D4A843",
-            }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#D4A843] animate-ping" />
-            Nepal's #1 Cricket Store
-          </motion.div>
-
-          <h1
-            className="font-black text-white leading-[1.02] mb-6"
-            style={{
-              fontSize: "clamp(2.8rem, 6vw, 5.5rem)",
-              fontFamily: "Playfair Display, serif",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Play Like
-            <br />
-            <span
-              style={{
-                background: "linear-gradient(90deg, #D4A843, #f4e4a1, #D4A843)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              Champions.
-            </span>
-            <br />
-            <span style={{ color: "#b0b0a4" }}>Gear Like Pros.</span>
-          </h1>
-
-          <p
-            style={{ color: "#8f8f82" }}
-            className="text-lg leading-relaxed mb-10 max-w-md"
-          >
-            From Kathmandu to Koshi — shop authentic cricket equipment, jerseys,
-            and gear. Trusted by Nepal's best players.
-          </p>
-
-          <div className="flex flex-wrap gap-4 mb-12">
-            <Link
-              to="/products"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-base transition-all hover:-translate-y-0.5"
-              style={{
-                background: "#D4A843",
-                color: "#111110",
-                fontFamily: "Plus Jakarta Sans, sans-serif",
-              }}
-            >
-              Shop All Gear →
-            </Link>
-            <Link
-              to="/products?featured=true"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-semibold text-base transition-all hover:-translate-y-0.5"
-              style={{
-                border: "1px solid rgba(255,255,255,0.15)",
-                color: "#f4f4f0",
-                background: "rgba(255,255,255,0.05)",
-                fontFamily: "Plus Jakarta Sans, sans-serif",
-              }}
-            >
-              Featured Picks
-            </Link>
-          </div>
-
-          {/* Stats */}
-          <div
-            className="flex gap-10 pt-8"
-            style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
-          >
-            {[
-              { value: "500+", label: "Products" },
-              { value: "10K+", label: "Happy Players" },
-              { value: "7", label: "Provinces" },
-            ].map((s) => (
-              <div key={s.label}>
-                <p
-                  className="font-black text-white text-2xl"
-                  style={{ fontFamily: "Playfair Display, serif" }}
-                >
-                  {s.value}
-                </p>
-                <p className="text-xs mt-0.5" style={{ color: "#555549" }}>
-                  {s.label}
-                </p>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* ── Right: Cricket pitch visual ── */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.85 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="hidden lg:flex items-center justify-center relative"
-        >
-          {/* Outer glow ring */}
-          <div
-            className="absolute w-96 h-96 rounded-full opacity-30 animate-pulse"
-            style={{
-              background:
-                "radial-gradient(circle, rgba(22,163,74,0.4) 0%, transparent 70%)",
-            }}
+      <motion.div
+        animate={{ rotateY: hovered ? 2 : 0, rotateX: hovered ? -2 : 0, scale: hovered ? 1.02 : 1 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        className="card-hover overflow-hidden"
+        style={{ transformStyle: 'preserve-3d' }}
+      >
+        {/* Image */}
+        <Link to={`/products/${product.slug || product._id}`} className="block relative overflow-hidden aspect-square bg-[#111]">
+          <img
+            src={product.images?.[0]?.url || '/images/products/bat.jpg'}
+            alt={product.name}
+            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
           />
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-          {/* Main circle — cricket pitch green */}
-          <div
-            className="relative w-80 h-80 rounded-full flex items-center justify-center"
-            style={{
-              background:
-                "linear-gradient(145deg, #1a4a1a 0%, #0f3d0f 40%, #0a2e0a 100%)",
-              boxShadow:
-                "0 0 80px rgba(22,163,74,0.3), 0 0 30px rgba(22,163,74,0.15), inset 0 1px 0 rgba(255,255,255,0.05)",
-            }}
-          >
-            {/* Pitch lines */}
-            <div className="absolute inset-0 rounded-full overflow-hidden opacity-20">
-              <div className="absolute inset-x-0 top-1/2 h-px bg-white/50" />
-              <div className="absolute inset-y-0 left-1/2 w-px bg-white/50" />
-              <div
-                className="absolute w-24 h-24 rounded-full border border-white/30"
-                style={{
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%,-50%)",
-                }}
-              />
-            </div>
-
-            {/* Cricket bat SVG — more realistic */}
-            <motion.div
-              animate={{ rotate: [0, -3, 3, -2, 0] }}
-              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-              className="relative z-10"
-            >
-              <svg width="120" height="180" viewBox="0 0 120 180" fill="none">
-                {/* Blade */}
-                <path
-                  d="M35 20 Q30 15 32 8 Q38 2 52 2 Q66 2 72 8 Q74 15 69 20 L72 130 Q72 140 60 142 Q48 140 48 130 Z"
-                  fill="url(#bladeGrad)"
-                />
-                {/* Blade grain lines */}
-                <line
-                  x1="44"
-                  y1="15"
-                  x2="44"
-                  y2="135"
-                  stroke="rgba(0,0,0,0.12)"
-                  strokeWidth="1"
-                />
-                <line
-                  x1="52"
-                  y1="10"
-                  x2="52"
-                  y2="138"
-                  stroke="rgba(0,0,0,0.08)"
-                  strokeWidth="1"
-                />
-                <line
-                  x1="60"
-                  y1="10"
-                  x2="60"
-                  y2="138"
-                  stroke="rgba(0,0,0,0.08)"
-                  strokeWidth="1"
-                />
-                <line
-                  x1="68"
-                  y1="15"
-                  x2="68"
-                  y2="135"
-                  stroke="rgba(0,0,0,0.12)"
-                  strokeWidth="1"
-                />
-                {/* Splice */}
-                <rect
-                  x="48"
-                  y="130"
-                  width="24"
-                  height="12"
-                  rx="2"
-                  fill="url(#spliceGrad)"
-                />
-                {/* Handle */}
-                <rect
-                  x="53"
-                  y="142"
-                  width="14"
-                  height="32"
-                  rx="4"
-                  fill="url(#handleGrad)"
-                />
-                {/* Grip bands */}
-                {[148, 155, 162, 169].map((y, i) => (
-                  <rect
-                    key={i}
-                    x="53"
-                    y={y}
-                    width="14"
-                    height="2.5"
-                    rx="1"
-                    fill="rgba(0,0,0,0.3)"
-                  />
-                ))}
-                <defs>
-                  <linearGradient id="bladeGrad" x1="35" y1="0" x2="85" y2="0">
-                    <stop offset="0%" stopColor="#c8a876" />
-                    <stop offset="40%" stopColor="#e8c98a" />
-                    <stop offset="100%" stopColor="#b8904a" />
-                  </linearGradient>
-                  <linearGradient id="spliceGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#6b4c2a" />
-                    <stop offset="100%" stopColor="#4a3020" />
-                  </linearGradient>
-                  <linearGradient id="handleGrad" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#2a1810" />
-                    <stop offset="50%" stopColor="#3d2415" />
-                    <stop offset="100%" stopColor="#2a1810" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </motion.div>
-
-            {/* Cricket ball */}
-            <motion.div
-              animate={{ y: [-4, 4, -4], rotate: [0, 10, 0] }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 0.5,
-              }}
-              className="absolute bottom-10 right-10"
-            >
-              <svg width="44" height="44" viewBox="0 0 44 44">
-                <defs>
-                  <radialGradient id="ballGrad" cx="35%" cy="30%">
-                    <stop offset="0%" stopColor="#e05555" />
-                    <stop offset="60%" stopColor="#c02020" />
-                    <stop offset="100%" stopColor="#8b0000" />
-                  </radialGradient>
-                </defs>
-                <circle cx="22" cy="22" r="20" fill="url(#ballGrad)" />
-                <path
-                  d="M22 4 Q28 14 28 22 Q28 30 22 40"
-                  stroke="white"
-                  strokeWidth="1.5"
-                  fill="none"
-                  opacity="0.7"
-                />
-                <path
-                  d="M22 4 Q16 14 16 22 Q16 30 22 40"
-                  stroke="white"
-                  strokeWidth="1.5"
-                  fill="none"
-                  opacity="0.7"
-                />
-                {/* seam stitches */}
-                {[8, 12, 16, 20, 24, 28, 32, 36].map((y, i) => (
-                  <line
-                    key={i}
-                    x1={i % 2 === 0 ? 19 : 25}
-                    y1={y}
-                    x2={i % 2 === 0 ? 21 : 27}
-                    y2={y + 2}
-                    stroke="white"
-                    strokeWidth="1"
-                    opacity="0.6"
-                  />
-                ))}
-              </svg>
-            </motion.div>
+          {/* Badges */}
+          <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+            {hasDiscount && <span className="badge badge-red text-[10px]">{discount}% OFF</span>}
+            {product.isFeatured && <span className="badge badge-gold text-[10px]">⭐ Featured</span>}
+            {product.stock === 0 && <span className="badge text-[10px]" style={{ background: 'rgba(0,0,0,0.7)', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)' }}>Sold Out</span>}
           </div>
-
-          {/* Floating brand badges */}
-          {[
-            { text: "🏏 SG", x: "-15%", y: "5%", delay: 0.6 },
-            { text: "Kookaburra 🦘", x: "65%", y: "10%", delay: 0.9 },
-            { text: "🇳🇵 Nepal", x: "-20%", y: "80%", delay: 1.1 },
-            { text: "MRF ⚡", x: "68%", y: "75%", delay: 1.3 },
-          ].map((b, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ delay: b.delay, type: "spring", stiffness: 200 }}
-              style={{ position: "absolute", left: b.x, top: b.y }}
-              className="px-3 py-1.5 rounded-xl text-xs font-semibold text-white backdrop-blur-sm"
-              style2={{
-                background: "rgba(255,255,255,0.07)",
-                border: "1px solid rgba(255,255,255,0.12)",
-              }}
-            >
-              <div
-                style={{
-                  background: "rgba(255,255,255,0.07)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  borderRadius: "10px",
-                  padding: "6px 12px",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  color: "white",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {b.text}
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
-
-      {/* Wave */}
-      <div className="absolute bottom-0 left-0 right-0">
-        <svg
-          viewBox="0 0 1440 60"
-          className="w-full"
-          style={{ fill: "var(--color-bg)" }}
-        >
-          <path d="M0,30 C360,60 1080,0 1440,30 L1440,60 L0,60 Z" />
-        </svg>
-      </div>
-    </section>
-  );
-}
-
-// ── Category Grid ─────────────────────────────────────────────────────────────
-function CategoryGrid() {
-  return (
-    <section className="page-container py-16">
-      <div className="text-center mb-10">
-        <h2 className="section-title">Shop by Category</h2>
-        <p className="section-subtitle">
-          Find exactly what you need for your game
-        </p>
-      </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-        {CATEGORIES.map((cat, i) => (
-          <motion.div
-            key={cat.name}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.06 }}
-          >
-            <Link
-              to={`/products?category=${cat.name}`}
-              className="flex flex-col items-center gap-2.5 p-4 rounded-2xl card hover:shadow-glow-green hover:-translate-y-1 transition-all duration-200 group"
-            >
-              <div
-                className={`w-12 h-12 rounded-xl bg-gradient-to-br ${cat.color} flex items-center justify-center text-xl shadow-md group-hover:scale-110 transition-transform`}
-              >
-                {cat.emoji}
-              </div>
-              <span
-                className="text-xs font-semibold text-center leading-tight"
-                style={{ fontFamily: "Syne, sans-serif" }}
-              >
-                {cat.name}
-              </span>
-            </Link>
-          </motion.div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-// ── Featured Products ─────────────────────────────────────────────────────────
-function FeaturedProducts() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    api
-      .get("/products?featured=true&limit=8")
-      .then(({ data }) => setProducts(data.data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  return (
-    <section className="page-container py-16">
-      <div className="flex items-end justify-between mb-10">
-        <div>
-          <h2 className="section-title">⭐ Featured Picks</h2>
-          <p className="section-subtitle">
-            Handpicked top gear for serious players
-          </p>
-        </div>
-        <Link
-          to="/products?featured=true"
-          className="hidden sm:flex items-center gap-1 text-primary-600 dark:text-primary-400 font-semibold text-sm hover:gap-2 transition-all"
-          style={{ fontFamily: "Syne, sans-serif" }}
-        >
-          View All <HiArrowRight className="w-4 h-4" />
         </Link>
-      </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-        {loading
-          ? Array.from({ length: 8 }).map((_, i) => (
-              <ProductCardSkeleton key={i} />
-            ))
-          : products.map((p, i) => (
-              <ProductCard key={p._id} product={p} index={i} />
-            ))}
-      </div>
-    </section>
-  );
+
+        {/* Info */}
+        <div className="p-4">
+          <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: 'var(--gold-400)', fontFamily: 'var(--font-display)', letterSpacing: '0.12em' }}>
+            {product.brand}
+          </p>
+          <Link to={`/products/${product.slug || product._id}`}>
+            <h3 className="text-sm font-semibold leading-snug line-clamp-2 mb-2 transition-colors duration-150 group-hover:text-gold" style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
+              {product.name}
+            </h3>
+          </Link>
+          <StarRating rating={product.rating} count={product.numReviews} />
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-base font-bold" style={{ color: 'var(--gold-400)', fontFamily: 'var(--font-mono)' }}>{formatPrice(finalPrice)}</span>
+            {hasDiscount && <span className="text-xs line-through" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{formatPrice(product.price)}</span>}
+          </div>
+        </div>
+
+        {/* Add to cart */}
+        <div className="px-4 pb-4">
+          <button
+            onClick={() => {
+              if (product.stock === 0) return
+              addItem(product, 1)
+              toast.success(`${product.name.substring(0, 25)} added!`, {
+                style: { background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border)' },
+                iconTheme: { primary: 'var(--gold-400)', secondary: '#000' },
+              })
+            }}
+            disabled={product.stock === 0}
+            className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${product.stock === 0 ? 'cursor-not-allowed' : 'btn-primary'}`}
+            style={product.stock === 0 ? { background: 'var(--bg-secondary)', color: 'var(--text-muted)' } : {}}
+          >
+            {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  )
 }
 
-// ── New Arrivals ──────────────────────────────────────────────────────────────
-function NewArrivals() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+/* ── Category Card ───────────────────────────────────────────── */
+const CATEGORIES = [
+  { name: 'Bats', emoji: '🏏', desc: 'English Willow and Kashmir' },
+  { name: 'Helmets', emoji: '⛑️', desc: 'Titanium and Composite' },
+  { name: 'Gloves', emoji: '🧤', desc: 'Batting and Wicket Keeping' },
+  { name: 'Balls', emoji: '🔴', desc: 'Match Leather Balls' },
+  { name: 'Pads', emoji: '🦵', desc: 'Lightweight Leg Guards' },
+  { name: 'Jerseys', emoji: '👕', desc: 'Custom and Team Kits' },
+  { name: 'Shoes', emoji: '👟', desc: 'Spike and Turf Shoes' },
+  { name: 'Bags', emoji: '🎒', desc: 'Duffle and Wheelie Bags' },
+]
+
+function CategoryCard({ cat, index }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -20 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.4, delay: index * 0.07 }}
+    >
+      <Link to={`/products?category=${cat.name}`} className="group block">
+        <motion.div
+          whileHover={{ scale: 1.04, y: -4 }}
+          transition={{ duration: 0.25 }}
+          className="card-gold p-5 flex flex-col items-center text-center gap-3 cursor-pointer"
+          style={{ minHeight: '140px' }}
+        >
+          <div
+            className="text-4xl transition-transform duration-300 group-hover:scale-110"
+            style={{ filter: 'drop-shadow(0 0 12px rgba(201,162,39,0.4))' }}
+          >
+            {cat.emoji}
+          </div>
+          <div>
+            <p className="font-semibold text-sm" style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
+              {cat.name}
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{cat.desc}</p>
+          </div>
+        </motion.div>
+      </Link>
+    </motion.div>
+  )
+}
+
+/* ── Testimonial ─────────────────────────────────────────────── */
+const TESTIMONIALS = [
+  { name: 'Rohan Thapa', role: 'Club Captain, Lalitpur CC', text: 'PitchNepal has the best selection of SG bats in all of Nepal. Top quality, fast delivery!', rating: 5 },
+  { name: 'Priya Sharma', role: 'Kathmandu Cricket Academy', text: 'Finally a store that stocks authentic gear. Got my gloves and bat in pristine condition!', rating: 5 },
+  { name: 'Bikash Rai', role: 'U19 Player, Biratnagar', text: 'Best prices for Kookaburra equipment across Nepal. Highly recommend PitchNepal.', rating: 5 },
+]
+
+/* ── Main HomePage ───────────────────────────────────────────── */
+export default function HomePage() {
+  const [featured, setFeatured] = useState([])
+  const [loadingProducts, setLoadingProducts] = useState(true)
+  const heroRef = useRef(null)
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0])
+  const heroY = useTransform(scrollYProgress, [0, 1], ['0%', '30%'])
 
   useEffect(() => {
-    api
-      .get("/products?sort=newest&limit=4")
-      .then(({ data }) => setProducts(data.data))
+    api.get('/products?featured=true&limit=8')
+      .then(({ data }) => setFeatured(data.data || []))
       .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => setLoadingProducts(false))
+  }, [])
 
   return (
-    <section className="bg-slate-50 dark:bg-dark-900/50 py-16 mt-8">
-      <div className="page-container">
-        <div className="flex items-end justify-between mb-10">
+    <div className="relative overflow-x-hidden" style={{ background: 'var(--bg-primary)' }}>
+
+      {/* ═══════════════════════════════════════════════════
+          HERO SECTION — 3D Bat, Ball & Stumps + Parallax
+      ════════════════════════════════════════════════════ */}
+      <section
+        ref={heroRef}
+        className="relative min-h-screen flex items-center overflow-hidden"
+        style={{ background: 'radial-gradient(ellipse at 70% 50%, rgba(201,162,39,0.06) 0%, rgba(8,8,8,0) 70%), var(--bg-primary)' }}
+      >
+        {/* Background grid */}
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'linear-gradient(rgba(201,162,39,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(201,162,39,0.04) 1px, transparent 1px)',
+          backgroundSize: '60px 60px',
+        }} />
+
+        {/* Gold radial glow */}
+        <div className="absolute top-1/2 right-[30%] -translate-y-1/2 w-[600px] h-[600px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(201,162,39,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+        <motion.div style={{ opacity: heroOpacity, y: heroY }} className="page-container relative z-10 grid lg:grid-cols-2 gap-12 items-center pt-20 pb-16">
+          {/* Text */}
           <div>
-            <h2 className="section-title text-black">🆕 New Arrivals</h2>
-            <p className="section-subtitle">Fresh gear just landed</p>
-          </div>
-          <Link
-            to="/products?sort=newest"
-            className="hidden sm:flex items-center gap-1 text-primary-600 dark:text-primary-400 font-semibold text-sm"
-            style={{ fontFamily: "Syne, sans-serif" }}
-          >
-            View All <HiArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          {loading
-            ? Array.from({ length: 4 }).map((_, i) => (
-                <ProductCardSkeleton key={i} />
-              ))
-            : products.map((p, i) => (
-                <ProductCard key={p._id} product={p} index={i} />
-              ))}
-        </div>
-      </div>
-    </section>
-  );
-}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="section-label mb-6"
+            >
+              <div className="w-1.5 h-1.5 rounded-full bg-gold-400 animate-pulse" style={{ background: 'var(--gold-400)' }} />
+              Nepal Premier Cricket Destination
+            </motion.div>
 
-// ── Features Strip ────────────────────────────────────────────────────────────
-function FeaturesStrip() {
-  return (
-    <section className="page-container py-16">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-        {FEATURES.map((f, i) => (
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.2 }}
+              className="mb-6"
+              style={{
+                fontFamily: '"Bebas Neue", sans-serif',
+                fontSize: 'clamp(3.5rem, 7vw, 6.5rem)',
+                letterSpacing: '0.05em',
+                lineHeight: '0.95',
+                textTransform: 'uppercase',
+              }}
+            >
+              <span style={{ color: 'var(--text-primary)' }}>Play Like</span>
+              <br />
+              <span className="text-gold-gradient">Legends</span>
+              <span style={{ color: 'var(--text-primary)' }}>.</span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.35 }}
+              className="text-lg mb-8 max-w-lg"
+              style={{ color: 'var(--text-secondary)', lineHeight: '1.7' }}
+            >
+              From English Willow bats to titanium helmets, world class cricket equipment
+              delivered across all 7 provinces of Nepal.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="flex flex-wrap gap-3"
+            >
+              <Link to="/products" className="btn-primary text-base px-8 py-3.5">
+                Shop Now <HiArrowRight className="w-4 h-4" />
+              </Link>
+              <Link to="/about" className="btn-secondary text-base px-8 py-3.5">
+                Our Story
+              </Link>
+            </motion.div>
+
+            {/* Trust badges */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8, duration: 0.5 }}
+              className="flex flex-wrap gap-6 mt-10"
+            >
+              {[
+                { label: 'Free shipping', sub: 'Orders above NPR 5,000' },
+                { label: 'Authentic gear', sub: 'Verified original brands' },
+                { label: 'Fast delivery', sub: 'Across all Nepal' },
+              ].map((t) => (
+                <div key={t.label} className="flex items-center gap-2">
+                  <div className="w-1.5 h-6 rounded-full" style={{ background: 'linear-gradient(to bottom, var(--gold-300), var(--gold-500))' }} />
+                  <div>
+                    <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>{t.label}</p>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t.sub}</p>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+
+          {/* Three.js Website Logo Emblem */}
           <motion.div
-            key={f.title}
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="relative h-[480px] lg:h-[560px] flex items-center justify-center"
+          >
+            <Suspense fallback={
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--gold-400)', borderTopColor: 'transparent' }} />
+              </div>
+            }>
+              <PitchNepalLogo3D className="w-full h-full" />
+            </Suspense>
+            {/* Glow beneath */}
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-64 h-20 blur-3xl rounded-full" style={{ background: 'radial-gradient(ellipse, rgba(201,162,39,0.3), transparent)' }} />
+          </motion.div>
+        </motion.div>
+
+        {/* Scroll indicator */}
+        <motion.div
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <p className="text-xs tracking-widest uppercase" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)' }}>Scroll</p>
+          <div className="w-px h-8" style={{ background: 'linear-gradient(to bottom, var(--gold-400), transparent)' }} />
+        </motion.div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════
+          STATS BAR
+      ════════════════════════════════════════════════════ */}
+      <section style={{ background: 'var(--bg-secondary)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
+        <div className="page-container py-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {[
+              { val: 10000, suf: '+', label: 'Players Equipped' },
+              { val: 500, suf: '+', label: 'Products In Stock' },
+              { val: 7, suf: '', label: 'Provinces Covered' },
+              { val: 50, suf: '+', label: 'Brands Available' },
+            ].map((s, i) => (
+              <motion.div
+                key={s.label}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.5 }}
+                className="text-center"
+              >
+                <div className="stat-number">
+                  <Counter end={s.val} suffix={s.suf} />
+                </div>
+                <p className="text-sm mt-1" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-heading)' }}>{s.label}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════
+          CATEGORIES SECTION
+      ════════════════════════════════════════════════════ */}
+      <section className="py-24" style={{ background: 'var(--bg-primary)' }}>
+        <div className="page-container">
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: i * 0.1 }}
-            className="flex flex-col items-center text-center gap-3 p-6 card"
+            className="text-center mb-14"
           >
-            <div className="w-12 h-12 rounded-2xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center">
-              <f.icon className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-            </div>
-            <h3
-              className="font-bold text-sm"
-              style={{ fontFamily: "Syne, sans-serif" }}
+            <div className="section-label justify-center mb-4">Shop By Category</div>
+            <h2
+              style={{
+                fontFamily: '"Bebas Neue", sans-serif',
+                fontSize: 'clamp(2.8rem, 5vw, 4.5rem)',
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                color: 'var(--text-primary)',
+                lineHeight: '0.95',
+              }}
             >
-              {f.title}
-            </h3>
-            <p className="text-xs text-[var(--color-text-muted)]">{f.desc}</p>
+              Everything You{' '}
+              <span className="text-gold-gradient">Need</span>
+            </h2>
           </motion.div>
-        ))}
-      </div>
-    </section>
-  );
-}
 
-// ── Newsletter ────────────────────────────────────────────────────────────────
-function Newsletter() {
-  const [email, setEmail] = useState("");
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (email) {
-      alert("Thank you for subscribing!");
-      setEmail("");
-    }
-  };
-  return (
-    <section className="bg-dark-900 py-16 border-t border-dark-800">
-      <div className="page-container text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm font-medium mb-4">
-          🏏 Stay in the Game
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {CATEGORIES.map((cat, i) => <CategoryCard key={cat.name} cat={cat} index={i} />)}
+          </div>
         </div>
-        <h2
-          className="text-3xl font-black text-white mb-3"
-          style={{ fontFamily: "Syne, sans-serif" }}
-        >
-          Get Exclusive Deals & Drops
-        </h2>
-        <p className="text-slate-400 mb-6 max-w-md mx-auto">
-          New arrivals, cricket tips, and member-only discounts — straight to
-          your inbox.
-        </p>
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
-        >
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email..."
-            className="flex-1 px-5 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors"
-          />
-          <button
-            type="submit"
-            className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-colors"
-            style={{ fontFamily: "Syne, sans-serif" }}
-          >
-            Subscribe
-          </button>
-        </form>
-      </div>
-    </section>
-  );
-}
+      </section>
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
-export default function HomePage() {
-  return (
-    <div>
-      <HeroSection />
-      <FeaturesStrip />
-      <CategoryGrid />
-      <FeaturedProducts />
-      <NewArrivals />
-      <Newsletter />
+      {/* ═══════════════════════════════════════════════════
+          FEATURED PRODUCTS
+      ════════════════════════════════════════════════════ */}
+      <section className="py-24" style={{ background: 'var(--bg-secondary)' }}>
+        <div className="page-container">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-4"
+          >
+            <div>
+              <div className="section-label mb-3">Handpicked For You</div>
+              <h2
+                style={{
+                  fontFamily: '"Bebas Neue", sans-serif',
+                  fontSize: 'clamp(2.8rem, 5vw, 4.5rem)',
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  color: 'var(--text-primary)',
+                  lineHeight: '0.95',
+                }}
+              >
+                Featured <span className="text-gold-gradient">Gear</span>
+              </h2>
+            </div>
+            <Link to="/products?featured=true" className="btn-secondary gap-2 flex-shrink-0">
+              View All <HiOutlineArrowRight className="w-4 h-4" />
+            </Link>
+          </motion.div>
+
+          {loadingProducts ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="card overflow-hidden">
+                  <div className="skeleton aspect-square" />
+                  <div className="p-4 space-y-2">
+                    <div className="skeleton h-3 w-1/3 rounded" />
+                    <div className="skeleton h-4 w-full rounded" />
+                    <div className="skeleton h-3 w-2/3 rounded" />
+                    <div className="skeleton h-8 w-full rounded-xl mt-3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+              {featured.map((product, i) => <ProductCard key={product._id} product={product} index={i} />)}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════
+          BRAND STORY BAND
+      ════════════════════════════════════════════════════ */}
+      <section className="py-28 relative overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
+        <div
+          className="absolute inset-0"
+          style={{ backgroundImage: 'radial-gradient(ellipse at 20% 50%, rgba(139,90,43,0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 50%, rgba(201,162,39,0.06) 0%, transparent 60%)' }}
+        />
+        <div className="page-container relative">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Left: big headline */}
+            <div>
+              <div className="section-label mb-5">Our Mission</div>
+              <h2
+                className="leading-none mb-6"
+                style={{
+                  fontFamily: '"Bebas Neue", sans-serif',
+                  fontSize: 'clamp(3rem, 6vw, 4.5rem)',
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                <span style={{ color: 'var(--text-primary)' }}>Cricket</span>
+                <br />
+                <span className="text-gold-gradient">Without</span>
+                <br />
+                <span style={{ color: 'var(--text-primary)' }}>Compromise</span>
+              </h2>
+              <p className="text-lg mb-8" style={{ color: 'var(--text-secondary)', lineHeight: '1.8' }}>
+                We built PitchNepal because Nepal cricket players deserved world class equipment at fair prices.
+                No compromise on quality. No compromise on service. Pure cricket passion.
+              </p>
+              <Link to="/about" className="btn-primary">
+                Our Story <HiArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            {/* Right: feature list */}
+            <div className="space-y-4">
+              {[
+                { icon: '🏆', title: 'Authentic Brands Only', desc: 'Every product is sourced directly from verified manufacturers including SG, MRF, Kookaburra, GM, and SS.' },
+                { icon: '🚚', title: 'Nationwide Delivery', desc: 'Fast shipping across all 77 districts in Nepal, from Kathmandu to Karnali.' },
+                { icon: '↩️', title: 'Hassle Free Returns', desc: '7 days return guarantee on all products if you are not completely satisfied.' },
+                { icon: '💬', title: 'Expert Guidance', desc: 'Seasoned cricket specialists ready to assist you in choosing the ideal gear.' },
+              ].map((f, i) => (
+                <motion.div
+                  key={f.title}
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.12, duration: 0.4 }}
+                  className="card-gold p-4 flex gap-4 items-start"
+                >
+                  <div className="text-2xl flex-shrink-0">{f.icon}</div>
+                  <div>
+                    <p className="font-semibold mb-1" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>{f.title}</p>
+                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{f.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════
+          TESTIMONIALS
+      ════════════════════════════════════════════════════ */}
+      <section className="py-24" style={{ background: 'var(--bg-secondary)' }}>
+        <div className="page-container">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-14"
+          >
+            <div className="section-label justify-center mb-4">Player Reviews</div>
+            <h2
+              style={{
+                fontFamily: '"Bebas Neue", sans-serif',
+                fontSize: 'clamp(2.8rem, 5vw, 4.5rem)',
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                color: 'var(--text-primary)',
+                lineHeight: '0.95',
+              }}
+            >
+              Trusted By <span className="text-gold-gradient">Champions</span>
+            </h2>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-5">
+            {TESTIMONIALS.map((t, i) => (
+              <motion.div
+                key={t.name}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.15, duration: 0.5 }}
+                className="card-glass p-6"
+              >
+                <div className="flex gap-0.5 mb-4">
+                  {[...Array(t.rating)].map((_, j) => <HiStar key={j} className="w-4 h-4" style={{ color: 'var(--gold-400)' }} />)}
+                </div>
+                <p className="text-base mb-5 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  "{t.text}"
+                </p>
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                    style={{ background: 'rgba(201,162,39,0.15)', color: 'var(--gold-400)', fontFamily: 'var(--font-heading)' }}
+                  >
+                    {t.name[0]}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>{t.name}</p>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t.role}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════
+          CTA SECTION
+      ════════════════════════════════════════════════════ */}
+      <section className="py-24 relative overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
+        <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(ellipse at center, rgba(201,162,39,0.1) 0%, transparent 70%)' }} />
+        <div className="page-container text-center relative">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <p className="section-label justify-center mb-5">Premier Equipment</p>
+            <h2
+              className="mb-6"
+              style={{
+                fontFamily: '"Bebas Neue", sans-serif',
+                fontSize: 'clamp(3.2rem, 6vw, 5.5rem)',
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
+                color: 'var(--text-primary)',
+                lineHeight: '0.95',
+              }}
+            >
+              Ready to <span className="text-gold-gradient">Gear Up?</span>
+            </h2>
+            <p className="text-lg mb-10 max-w-xl mx-auto" style={{ color: 'var(--text-secondary)' }}>
+              Browse Nepal premier collection of authentic cricket equipment. Free shipping on orders above NPR 5,000.
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Link
+                to="/products"
+                className="btn-primary text-base px-10 py-4 animate-pulse-gold"
+              >
+                Shop the Collection <HiArrowRight className="w-5 h-5" />
+              </Link>
+              <Link to="/register?role=seller" className="btn-secondary text-base px-10 py-4">
+                Become a Seller
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
     </div>
-  );
+  )
 }
