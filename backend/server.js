@@ -28,19 +28,30 @@ const app = express();
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (process.env.NODE_ENV === "development") return callback(null, true);
+      if (process.env.NODE_ENV === "development" || !origin) return callback(null, true);
+      const configuredUrls = (process.env.FRONTEND_URL || "")
+        .split(",")
+        .map((u) => u.trim().replace(/\/$/, ""))
+        .filter(Boolean);
+
       const allowed = [
-        process.env.FRONTEND_URL || "http://localhost:5173",
+        ...configuredUrls,
         "http://localhost:5173",
         "http://localhost:3000",
       ];
-      if (!origin || allowed.includes(origin)) return callback(null, true);
+
+      if (
+        allowed.includes(origin.replace(/\/$/, "")) ||
+        origin.endsWith(".vercel.app")
+      ) {
+        return callback(null, true);
+      }
       return callback(null, false);
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    optionsSuccessStatus: 200, // Some browsers (IE11) choke on 204
+    optionsSuccessStatus: 200,
   }),
 );
 
