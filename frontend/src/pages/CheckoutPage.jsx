@@ -1,7 +1,4 @@
-// src/pages/CheckoutPage.jsx
-// Multi-step checkout: Shipping → Payment → Confirm
-// Supports Khalti, eSewa v2 (HMAC signed), and Cash on Delivery
-
+// src/pages/CheckoutPage.jsx — Clean, Balanced Multi-Step Checkout
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -55,7 +52,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [orderId, setOrderId] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState("khalti");
-  const [stripeOrderId, setStripeOrderId] = useState(null); // must be before any return
+  const [stripeOrderId, setStripeOrderId] = useState(null);
 
   const [shipping, setShipping] = useState({
     fullName: user?.name || "",
@@ -78,12 +75,12 @@ export default function CheckoutPage() {
         <div className="text-5xl mb-4">🛒</div>
         <h2
           className="text-2xl font-bold mb-3"
-          style={{ fontFamily: "Syne, sans-serif" }}
+          style={{ fontFamily: "var(--font-heading)" }}
         >
           Your cart is empty
         </h2>
         <Link to="/products" className="btn-primary">
-          Shop Now
+          Browse Equipment
         </Link>
       </div>
     );
@@ -103,42 +100,25 @@ export default function CheckoutPage() {
     return data.data._id;
   };
 
-  // ── Khalti v2 — server-side initiation, redirect to Khalti's payment page ──
+  // ── Khalti v2 ──
   const handleKhalti = async (newOrderId) => {
-    // Ask backend to create a Khalti payment and get the payment_url
     const { data } = await api.post(
       `/orders/${newOrderId}/pay/khalti/initiate`,
     );
-    // Redirect browser to Khalti's hosted payment page
-    // Khalti will redirect back to /payment/khalti/callback?pidx=...&purchase_order_id=...
     window.location.href = data.data.payment_url;
-    // Note: we don't setLoading(false) here — the page navigates away
   };
 
-  // ── eSewa v2 (server-side HMAC signature) ───────────────────────────────────
+  // ── eSewa v2 ──
   const handleEsewa = async (newOrderId) => {
-    // Ask backend for signed form fields
-    const { data } = await api.post(`/esewa/initiate/${newOrderId}`);
-    const p = data.data;
-
+    const { data } = await api.post(`/orders/${newOrderId}/pay/esewa/initiate`);
+    const formData = data.data;
     const form = document.createElement("form");
     form.method = "POST";
-    form.action = p.payment_url;
-
-    const fields = {
-      amount: p.amount,
-      tax_amount: p.tax_amount,
-      product_service_charge: p.product_service_charge,
-      product_delivery_charge: p.product_delivery_charge,
-      total_amount: p.total_amount,
-      transaction_uuid: p.transaction_uuid,
-      product_code: p.product_code,
-      success_url: p.success_url,
-      failure_url: p.failure_url,
-      signed_field_names: p.signed_field_names,
-      signature: p.signature,
-    };
-    Object.entries(fields).forEach(([k, v]) => {
+    form.action =
+      formData.esewa_url ||
+      "https://rc-epay.esewa.com.np/api/epay/main/v2/form";
+    Object.entries(formData).forEach(([k, v]) => {
+      if (k === "esewa_url") return;
       const inp = document.createElement("input");
       inp.type = "hidden";
       inp.name = k;
@@ -149,62 +129,64 @@ export default function CheckoutPage() {
     form.submit();
   };
 
-  // ── Stripe ─────────────────────────────────────────────────────────────────
-  // ── Main handler ────────────────────────────────────────────────────────────
   const handlePlaceOrder = async () => {
     setLoading(true);
     try {
       const newOrderId = await placeOrder();
       setOrderId(newOrderId);
-      if (paymentMethod === "cod") {
-        clearCart();
-        setStep(3);
-        toast.success("Order placed! 🎉");
-        return;
-      }
+
       if (paymentMethod === "khalti") {
         await handleKhalti(newOrderId);
         return;
       }
+
       if (paymentMethod === "esewa") {
         await handleEsewa(newOrderId);
         return;
       }
+
+      if (paymentMethod === "cod") {
+        clearCart();
+        setStep(3);
+        toast.success("Order placed successfully!");
+      }
     } catch (err) {
       toast.error(getErrorMessage(err));
-    } finally {
       setLoading(false);
     }
   };
 
+  // ── Confirmation Screen ──
   if (step === 3) {
     return (
-      <div className="page-container pt-28 py-20 min-h-screen flex items-center justify-center">
+      <div className="page-container pt-28 py-20 min-h-screen">
         <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="text-center max-w-md"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md mx-auto card p-8 text-center"
         >
-          <div className="w-20 h-20 bg-primary-100 dark:bg-primary-900/40 rounded-full flex items-center justify-center mx-auto mb-5">
-            <HiOutlineCheckCircle className="w-10 h-10 text-primary-600" />
+          <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-950/40 text-green-600 flex items-center justify-center mx-auto mb-5">
+            <HiOutlineCheckCircle className="w-10 h-10" />
           </div>
-          <h1
-            className="text-3xl font-black mb-3"
-            style={{ fontFamily: "Syne, sans-serif" }}
+          <h2
+            className="text-2xl font-bold mb-2 text-slate-900 dark:text-white"
+            style={{ fontFamily: "var(--font-heading)" }}
           >
-            Order Placed! 🏏
-          </h1>
-          <p className="text-[var(--color-text-muted)] mb-6">
+            Order Confirmed!
+          </h2>
+          <p className="text-sm text-slate-500 mb-6">
+            Thank you for your order. We're packing your cricket kit now.
+            <br />
             Order ID:{" "}
-            <strong className="font-mono text-sm">
+            <strong className="font-mono text-slate-800 dark:text-slate-200">
               #{orderId?.slice(-8).toUpperCase()}
             </strong>
           </p>
           <div className="flex gap-3 justify-center">
-            <Link to="/orders" className="btn-primary">
+            <Link to="/orders" className="btn-primary text-xs py-3 px-6">
               Track Order
             </Link>
-            <Link to="/products" className="btn-secondary">
+            <Link to="/products" className="btn-secondary text-xs py-3 px-6">
               Continue Shopping
             </Link>
           </div>
@@ -216,23 +198,23 @@ export default function CheckoutPage() {
   return (
     <div className="page-container pt-24 py-12 min-h-screen">
       <h1
-        className="text-3xl font-black mb-8"
-        style={{ fontFamily: "Syne, sans-serif" }}
+        className="text-3xl font-bold mb-8 text-slate-900 dark:text-white"
+        style={{ fontFamily: "var(--font-heading)" }}
       >
         Checkout
       </h1>
 
-      {/* Step indicator */}
+      {/* Step indicator — Clean & Neutral */}
       <div className="flex items-center gap-2 mb-8 text-sm font-semibold flex-wrap">
         {["Shipping", "Payment", "Confirm"].map((s, i) => (
           <div key={s} className="flex items-center gap-2">
             <div
-              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
                 step > i + 1
-                  ? "bg-primary-600 text-white"
+                  ? "bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200"
                   : step === i + 1
-                    ? "bg-primary-600 text-white ring-4 ring-primary-200 dark:ring-primary-900"
-                    : "bg-slate-200 dark:bg-slate-700 text-[var(--color-text-muted)]"
+                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-400"
               }`}
             >
               {step > i + 1 ? "✓" : i + 1}
@@ -240,15 +222,15 @@ export default function CheckoutPage() {
             <span
               className={
                 step === i + 1
-                  ? "text-primary-600"
-                  : "text-[var(--color-text-muted)]"
+                  ? "text-slate-900 dark:text-white font-bold"
+                  : "text-slate-500"
               }
             >
               {s}
             </span>
             {i < 2 && (
               <div
-                className={`h-0.5 w-8 ${step > i + 1 ? "bg-primary-600" : "bg-slate-200 dark:bg-slate-700"}`}
+                className={`h-0.5 w-8 ${step > i + 1 ? "bg-slate-400 dark:bg-slate-600" : "bg-slate-200 dark:bg-slate-800"}`}
               />
             )}
           </div>
@@ -265,8 +247,8 @@ export default function CheckoutPage() {
               className="card p-6"
             >
               <h2
-                className="text-xl font-bold mb-5"
-                style={{ fontFamily: "Syne, sans-serif" }}
+                className="text-xl font-bold mb-5 text-slate-900 dark:text-white"
+                style={{ fontFamily: "var(--font-heading)" }}
               >
                 Shipping Address
               </h2>
@@ -359,7 +341,7 @@ export default function CheckoutPage() {
                   }
                   setStep(2);
                 }}
-                className="btn-primary mt-6 w-full"
+                className="btn-primary mt-6 w-full py-3.5"
               >
                 Continue to Payment →
               </button>
@@ -374,8 +356,8 @@ export default function CheckoutPage() {
               className="card p-6"
             >
               <h2
-                className="text-xl font-bold mb-5"
-                style={{ fontFamily: "Syne, sans-serif" }}
+                className="text-xl font-bold mb-5 text-slate-900 dark:text-white"
+                style={{ fontFamily: "var(--font-heading)" }}
               >
                 Payment Method
               </h2>
@@ -383,10 +365,10 @@ export default function CheckoutPage() {
                 {PAYMENT_METHODS.map((pm) => (
                   <label
                     key={pm.value}
-                    className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-colors ${
                       paymentMethod === pm.value
-                        ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
-                        : "border-[var(--color-border)] hover:border-primary-400"
+                        ? "border-slate-900 dark:border-white bg-slate-50 dark:bg-slate-800/60"
+                        : "border-slate-200 dark:border-slate-800 hover:border-slate-400"
                     }`}
                   >
                     <input
@@ -395,17 +377,17 @@ export default function CheckoutPage() {
                       value={pm.value}
                       checked={paymentMethod === pm.value}
                       onChange={() => setPaymentMethod(pm.value)}
-                      className="w-4 h-4 accent-primary-600"
+                      className="w-4 h-4 accent-slate-900 dark:accent-white"
                     />
                     <span className="text-2xl">{pm.icon}</span>
                     <div>
                       <p
-                        className="font-bold text-sm"
-                        style={{ fontFamily: "Syne, sans-serif" }}
+                        className="font-bold text-sm text-slate-900 dark:text-white"
+                        style={{ fontFamily: "var(--font-heading)" }}
                       >
                         {pm.label}
                       </p>
-                      <p className="text-xs text-[var(--color-text-muted)]">
+                      <p className="text-xs text-slate-500">
                         {pm.desc}
                       </p>
                     </div>
@@ -414,7 +396,7 @@ export default function CheckoutPage() {
               </div>
 
               {paymentMethod === "khalti" && (
-                <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-4 text-sm mb-4">
+                <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-xl p-4 text-sm mb-4">
                   <p className="font-semibold text-purple-700 dark:text-purple-400 mb-1">
                     Khalti Test Credentials
                   </p>
@@ -424,30 +406,29 @@ export default function CheckoutPage() {
                 </div>
               )}
               {paymentMethod === "esewa" && (
-                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 text-sm mb-4">
-                  <p className="font-semibold text-green-700 dark:text-green-400 mb-1">
+                <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-sm mb-4">
+                  <p className="font-semibold text-slate-800 dark:text-slate-200 mb-1">
                     eSewa Test Credentials
                   </p>
-                  <p className="text-green-600 dark:text-green-300 font-mono text-xs">
+                  <p className="text-slate-600 dark:text-slate-400 font-mono text-xs">
                     ID: 9806800001 · Password: Nepal@123 · Token: 123456
                   </p>
-                  <p className="text-green-600 dark:text-green-300 text-xs mt-1">
+                  <p className="text-slate-500 text-xs mt-1">
                     You will be redirected to eSewa's secure payment page.
                   </p>
                 </div>
               )}
               {paymentMethod === "cod" && (
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-sm mb-4">
-                  <p className="font-semibold text-amber-700 dark:text-amber-400">
-                    Pay cash when your order is delivered. Available across all
-                    provinces of Nepal.
+                <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-sm mb-4">
+                  <p className="font-semibold text-slate-800 dark:text-slate-200">
+                    Pay cash when your order is delivered. Available across all provinces of Nepal.
                   </p>
                 </div>
               )}
 
               {/* Stripe inline card form */}
               {paymentMethod === "stripe" && stripeOrderId && (
-                <div className="border border-[var(--color-border)] rounded-2xl p-5 mb-4">
+                <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-5 mb-4">
                   <StripePayment
                     orderId={stripeOrderId}
                     totalNPR={total}
@@ -462,7 +443,7 @@ export default function CheckoutPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep(1)}
-                  className="btn-secondary flex-1"
+                  className="btn-secondary flex-1 py-3"
                 >
                   ← Back
                 </button>
@@ -470,7 +451,7 @@ export default function CheckoutPage() {
                   <button
                     onClick={handlePlaceOrder}
                     disabled={loading}
-                    className="btn-primary flex-1"
+                    className="btn-primary flex-1 py-3"
                   >
                     {loading
                       ? "Processing..."
@@ -493,7 +474,7 @@ export default function CheckoutPage() {
                       }
                     }}
                     disabled={loading}
-                    className="btn-primary flex-1"
+                    className="btn-primary flex-1 py-3"
                   >
                     {loading ? "Processing..." : "Enter Card Details →"}
                   </button>
@@ -503,78 +484,76 @@ export default function CheckoutPage() {
           )}
         </div>
 
-        {/* Order summary */}
+        {/* Order summary — Clean & High Contrast */}
         <div className="card p-5 h-fit sticky top-24">
           <h3
-            className="font-bold mb-4"
-            style={{ fontFamily: "Syne, sans-serif" }}
+            className="font-bold mb-4 text-slate-900 dark:text-white"
+            style={{ fontFamily: "var(--font-heading)" }}
           >
             Order Summary
           </h3>
-          <div className="space-y-3 mb-4 max-h-56 overflow-y-auto custom-scrollbar">
+          <div className="space-y-3 mb-4 max-h-56 overflow-y-auto">
             {items.map((item) => (
               <div
                 key={`${item.product}-${item.size}-${item.color}`}
-                className="flex gap-3"
+                className="flex gap-3 items-center"
               >
                 <img
                   src={item.image}
                   alt={item.name}
-                  className="w-12 h-12 rounded-lg object-cover bg-slate-100 dark:bg-slate-800 flex-shrink-0"
+                  className="w-12 h-12 rounded-lg object-cover bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex-shrink-0"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold line-clamp-1">
+                  <p className="text-xs font-bold line-clamp-1 text-slate-800 dark:text-slate-200">
                     {item.name}
                   </p>
                   {item.size && (
-                    <p className="text-xs text-[var(--color-text-muted)]">
+                    <p className="text-xs text-slate-500">
                       Size: {item.size}
                     </p>
                   )}
-                  <p className="text-xs text-primary-600">×{item.quantity}</p>
+                  <p className="text-xs text-slate-500 font-semibold">Qty: {item.quantity}</p>
                 </div>
-                <p className="text-xs font-bold">
+                <p className="text-xs font-mono font-bold text-slate-900 dark:text-white">
                   {formatPrice(item.price * item.quantity)}
                 </p>
               </div>
             ))}
           </div>
-          <div className="space-y-2 text-sm pt-3 border-t border-[var(--color-border)]">
-            <div className="flex justify-between text-[var(--color-text-muted)]">
+          <div className="space-y-2 text-sm pt-3 border-t border-slate-200 dark:border-slate-800">
+            <div className="flex justify-between text-slate-500 text-xs">
               <span>Subtotal</span>
-              <span>{formatPrice(subtotal)}</span>
+              <span className="font-mono text-slate-700 dark:text-slate-300 font-semibold">{formatPrice(subtotal)}</span>
             </div>
-            <div className="flex justify-between text-[var(--color-text-muted)]">
+            <div className="flex justify-between text-slate-500 text-xs">
               <span>Shipping</span>
               <span
-                className={
-                  shippingCost === 0 ? "text-primary-600 font-semibold" : ""
-                }
+                className="font-mono text-slate-700 dark:text-slate-300 font-semibold"
               >
                 {shippingCost === 0 ? "FREE" : formatPrice(shippingCost)}
               </span>
             </div>
-            <div className="flex justify-between text-[var(--color-text-muted)]">
+            <div className="flex justify-between text-slate-500 text-xs">
               <span>VAT (13%)</span>
-              <span>{formatPrice(tax)}</span>
+              <span className="font-mono text-slate-700 dark:text-slate-300 font-semibold">{formatPrice(tax)}</span>
             </div>
-            <div className="flex justify-between font-bold pt-2 border-t border-[var(--color-border)]">
+            <div className="flex justify-between font-bold text-base pt-3 border-t border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
               <span>Total</span>
-              <span className="text-primary-600 dark:text-primary-400">
+              <span className="font-mono">
                 {formatPrice(total)}
               </span>
             </div>
           </div>
           {step === 2 && shipping.fullName && (
-            <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
-              <p className="text-xs font-semibold text-[var(--color-text-muted)] mb-1 uppercase tracking-wide">
+            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+              <p className="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">
                 Delivering to
               </p>
-              <p className="text-sm font-semibold">{shipping.fullName}</p>
-              <p className="text-xs text-[var(--color-text-muted)]">
+              <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{shipping.fullName}</p>
+              <p className="text-xs text-slate-500">
                 {shipping.street}, {shipping.city}, {shipping.district}
               </p>
-              <p className="text-xs text-[var(--color-text-muted)]">
+              <p className="text-xs text-slate-500">
                 {shipping.phone}
               </p>
             </div>

@@ -62,25 +62,25 @@
     scroll-behavior: smooth;
   }
 
-  /* ── Dark Mode Active ── */
+  /* ── Dark Mode Active (Clean Neutral Charcoal / Slate) ── */
   html.dark, .dark {
-    --bg-primary: #080F0C;
-    --bg-secondary: #0F172A;
-    --bg-card: #13221A;
-    --bg-card-hover: #192D23;
-    --bg-overlay: rgba(8, 15, 12, 0.85);
+    --bg-primary: #0B0F17;
+    --bg-secondary: #111827;
+    --bg-card: #151E2E;
+    --bg-card-hover: #1E293B;
+    --bg-overlay: rgba(11, 15, 23, 0.85);
 
     --text-primary: #F8FAFC;
-    --text-secondary: #CBD5E1;
+    --text-secondary: #94A3B8;
     --text-muted: #64748B;
     --text-inverse: #0F172A;
 
-    --border: #1E3A2B;
-    --border-strong: #2D5540;
+    --border: #243044;
+    --border-strong: #334155;
     --border-subtle: rgba(255, 255, 255, 0.06);
 
-    --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.6);
-    --shadow-card-hover: 0 16px 36px rgba(0, 0, 0, 0.8), 0 0 20px rgba(34, 197, 94, 0.2);
+    --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.4);
+    --shadow-card-hover: 0 16px 36px rgba(0, 0, 0, 0.6);
   }
 
   html {
@@ -138,11 +138,11 @@
     background: var(--bg-secondary);
   }
   ::-webkit-scrollbar-thumb {
-    background: #16A34A;
+    background: #94A3B8;
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #15803D;
+    background: #64748B;
   }
 }
 
@@ -221,37 +221,29 @@
     border: 1px solid var(--border);
     border-radius: 16px;
     box-shadow: var(--shadow-card);
-    transition: all var(--transition-base);
   }
   .card-hover {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 16px;
     box-shadow: var(--shadow-card);
-    transition: all var(--transition-base);
-    cursor: pointer;
+    transition: border-color var(--transition-fast);
   }
   .card-hover:hover {
-    background: var(--bg-card-hover);
     border-color: #16A34A;
-    box-shadow: var(--shadow-card-hover);
-    transform: translateY(-4px);
   }
 
   /* Vibrant Category Card */
   .card-gold {
     background: var(--bg-card);
-    border: 1.5px solid var(--border);
+    border: 1px solid var(--border);
     border-radius: 16px;
-    box-shadow: var(--shadow-card);
     position: relative;
     overflow: hidden;
-    transition: all var(--transition-base);
+    transition: border-color var(--transition-fast);
   }
   .card-gold:hover {
     border-color: #16A34A;
-    box-shadow: 0 12px 28px rgba(22, 163, 74, 0.2);
-    transform: translateY(-4px);
   }
 
   /* Glass Card */
@@ -265,14 +257,14 @@
   /* ── Form Inputs ────────────────────────────────────── */
   .input {
     @apply w-full px-4 py-3 rounded-xl text-sm transition-all duration-150 outline-none;
-    background: var(--bg-card);
-    border: 1.5px solid var(--border);
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
     color: var(--text-primary);
     font-family: var(--font-body);
   }
   .input:focus {
-    border-color: #16A34A;
-    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18);
+    border-color: #64748B;
+    box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.15);
   }
   .input::placeholder {
     color: var(--text-muted);
@@ -286,13 +278,13 @@
 
   .select {
     @apply w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-150 cursor-pointer;
-    background: var(--bg-card);
-    border: 1.5px solid var(--border);
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
     color: var(--text-primary);
   }
   .select:focus {
-    border-color: #16A34A;
-    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18);
+    border-color: #64748B;
+    box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.15);
   }
 
   /* ── Skeletons ──────────────────────────────────────── */
@@ -380,17 +372,13 @@
     border: 1.5px solid rgba(34, 197, 94, 0.4);
   }
 
-  /* ── Navigation Glass ───────────────────────────────── */
+  /* ── Navigation Surface ───────────────────────────────── */
   .nav-glass {
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background: #FFFFFF;
     border-bottom: 1px solid var(--border);
   }
   .dark .nav-glass {
-    background: rgba(8, 15, 12, 0.94);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background: #0F172A;
     border-bottom: 1px solid var(--border);
   }
 

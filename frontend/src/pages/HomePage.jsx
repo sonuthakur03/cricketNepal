@@ -1,15 +1,10 @@
-// src/pages/HomePage.jsx — Lightweight 2D hero redesign with Bebas Neue + Outfit typography, clean hyphen-free copy
-
+// src/pages/HomePage.jsx — Lightweight 2D hero redesign with Bebas Neue + Outfit typography, clean copy
 import { useRef, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { HiArrowRight, HiStar, HiOutlineArrowRight } from 'react-icons/hi'
 import api from '../utils/api'
-import { formatPrice } from '../utils/helpers'
-import { StarRating } from '../components/common/UI'
-import useCartStore from '../context/cartStore'
-import useAuthStore from '../context/authStore'
-import toast from 'react-hot-toast'
+import ProductCard from '../components/product/ProductCard'
 
 /* ── Animated counter ─────────────────────────────────────────── */
 function Counter({ end, suffix = '', duration = 2 }) {
@@ -36,89 +31,6 @@ function Counter({ end, suffix = '', duration = 2 }) {
   }, [started, end, duration])
 
   return <span ref={ref}>{count.toLocaleString()}{suffix}</span>
-}
-
-/* ── Product Card (redesigned) ───────────────────────────────── */
-function ProductCard({ product, index = 0 }) {
-  const [hovered, setHovered] = useState(false)
-  const addItem = useCartStore((s) => s.addItem)
-  const finalPrice = product.discountPrice > 0 ? product.discountPrice : product.price
-  const hasDiscount = product.discountPrice > 0
-  const discount = hasDiscount ? Math.round(((product.price - product.discountPrice) / product.price) * 100) : 0
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-50px' }}
-      transition={{ duration: 0.5, delay: index * 0.08 }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className="group relative"
-      style={{ perspective: '1000px' }}
-    >
-      <motion.div
-        animate={{ rotateY: hovered ? 2 : 0, rotateX: hovered ? -2 : 0, scale: hovered ? 1.02 : 1 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
-        className="card-hover overflow-hidden"
-        style={{ transformStyle: 'preserve-3d' }}
-      >
-        {/* Image */}
-        <Link to={`/products/${product.slug || product._id}`} className="block relative overflow-hidden aspect-square bg-[#111]">
-          <img
-            src={product.images?.[0]?.url || '/images/products/bat.jpg'}
-            alt={product.name}
-            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
-          />
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-          {/* Badges */}
-          <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-            {hasDiscount && <span className="badge badge-red text-[10px]">{discount}% OFF</span>}
-            {product.isFeatured && <span className="badge badge-gold text-[10px]">⭐ Featured</span>}
-            {product.stock === 0 && <span className="badge text-[10px]" style={{ background: 'rgba(0,0,0,0.7)', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)' }}>Sold Out</span>}
-          </div>
-        </Link>
-
-        {/* Info */}
-        <div className="p-4">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: 'var(--gold-400)', fontFamily: 'var(--font-display)', letterSpacing: '0.12em' }}>
-            {product.brand}
-          </p>
-          <Link to={`/products/${product.slug || product._id}`}>
-            <h3 className="text-sm font-semibold leading-snug line-clamp-2 mb-2 transition-colors duration-150 group-hover:text-gold" style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
-              {product.name}
-            </h3>
-          </Link>
-          <StarRating rating={product.rating} count={product.numReviews} />
-          <div className="flex items-center gap-2 mt-2">
-            <span className="text-base font-bold" style={{ color: 'var(--gold-400)', fontFamily: 'var(--font-mono)' }}>{formatPrice(finalPrice)}</span>
-            {hasDiscount && <span className="text-xs line-through" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{formatPrice(product.price)}</span>}
-          </div>
-        </div>
-
-        {/* Add to cart */}
-        <div className="px-4 pb-4">
-          <button
-            onClick={() => {
-              if (product.stock === 0) return
-              addItem(product, 1)
-              toast.success(`${product.name.substring(0, 25)} added!`, {
-                style: { background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border)' },
-                iconTheme: { primary: 'var(--gold-400)', secondary: '#000' },
-              })
-            }}
-            disabled={product.stock === 0}
-            className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${product.stock === 0 ? 'cursor-not-allowed' : 'btn-primary'}`}
-            style={product.stock === 0 ? { background: 'var(--bg-secondary)', color: 'var(--text-muted)' } : {}}
-          >
-            {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-          </button>
-        </div>
-      </motion.div>
-    </motion.div>
-  )
 }
 
 /* ── Category Card ───────────────────────────────────────────── */

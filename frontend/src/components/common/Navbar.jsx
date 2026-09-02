@@ -97,41 +97,38 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
     <>
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled ? 'nav-glass shadow-xl' : 'bg-transparent'
+          scrolled ? 'nav-glass shadow-sm py-1' : 'bg-transparent py-3'
         }`}
       >
         <div className="page-container flex items-center justify-between h-16 md:h-18">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group flex-shrink-0">
+          <Link to="/" className="flex items-center gap-3 group flex-shrink-0">
             <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.2 }}>
-              <PNLogo size={36} />
+              <PNLogo size={38} />
             </motion.div>
             <div className="flex flex-col leading-none">
               <span
-                className="text-xl font-bold tracking-tight"
+                className="text-xl md:text-2xl font-bold tracking-tight"
                 style={{ fontFamily: 'var(--font-heading)', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}
               >
                 Pitch<span style={{ color: '#16A34A' }}>Nepal</span>
               </span>
-              <span className="text-[10px] tracking-[0.16em] uppercase font-semibold text-green-600" style={{ fontFamily: 'var(--font-heading)' }}>
+              <span className="text-[10px] tracking-[0.18em] uppercase font-bold text-slate-400 dark:text-slate-500 mt-0.5" style={{ fontFamily: 'var(--font-heading)' }}>
                 Cricket Vault
               </span>
             </div>
           </Link>
 
-          {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-1">
+          {/* Desktop nav — Minimal & Clean */}
+          <nav className="hidden md:flex items-center gap-6 lg:gap-8">
             <NavLink
               to="/products"
               className={({ isActive }) =>
-                `px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 ${
-                  isActive ? 'text-green-600 bg-green-500/10' : 'hover:text-green-600'
+                `text-sm font-bold transition-colors py-1 ${
+                  isActive ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`
               }
-              style={({ isActive }) => ({
-                color: isActive ? '#16A34A' : 'var(--text-secondary)',
-                fontFamily: 'var(--font-heading)',
-              })}
+              style={{ fontFamily: 'var(--font-heading)' }}
             >
               Shop
             </NavLink>
@@ -139,14 +136,11 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
             <NavLink
               to="/about"
               className={({ isActive }) =>
-                `px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 ${
-                  isActive ? 'text-green-600 bg-green-500/10' : 'hover:text-green-600'
+                `text-sm font-bold transition-colors py-1 ${
+                  isActive ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`
               }
-              style={({ isActive }) => ({
-                color: isActive ? '#16A34A' : 'var(--text-secondary)',
-                fontFamily: 'var(--font-heading)',
-              })}
+              style={{ fontFamily: 'var(--font-heading)' }}
             >
               About
             </NavLink>
@@ -155,16 +149,13 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
               <NavLink
                 to="/seller"
                 className={({ isActive }) =>
-                  `px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase transition-all duration-150 ml-2 ${
-                    isActive ? 'bg-green-600 text-white' : 'bg-green-500/10 text-green-600 border border-green-500/30 hover:bg-green-500/20'
+                  `text-xs font-bold uppercase tracking-wider transition-colors py-1 ${
+                    isActive ? 'text-slate-900 dark:text-white font-extrabold' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                   }`
                 }
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  letterSpacing: '0.04em',
-                }}
+                style={{ fontFamily: 'var(--font-heading)' }}
               >
-                Seller Dashboard
+                Seller Hub
               </NavLink>
             )}
 
@@ -172,27 +163,24 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
               <NavLink
                 to="/admin"
                 className={({ isActive }) =>
-                  `px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase transition-all duration-150 ml-2 ${
-                    isActive ? 'bg-green-700 text-white' : 'bg-green-500/10 text-green-700 border border-green-500/30 hover:bg-green-500/20'
+                  `text-xs font-bold uppercase tracking-wider transition-colors py-1 ${
+                    isActive ? 'text-slate-900 dark:text-white font-extrabold' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                   }`
                 }
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  letterSpacing: '0.04em',
-                }}
+                style={{ fontFamily: 'var(--font-heading)' }}
               >
-                Admin Dashboard
+                Admin Panel
               </NavLink>
             )}
           </nav>
 
-          {/* Actions */}
-          <div className="flex items-center gap-1">
+          {/* Actions Bar — Minimal & Borderless */}
+          <div className="flex items-center gap-3 md:gap-4">
             {/* Search */}
             <button
               onClick={() => setSearchOpen(true)}
-              className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-green-500/10 hover:text-green-600"
-              style={{ color: 'var(--text-muted)' }}
+              className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+              title="Search products"
             >
               <HiOutlineSearch className="w-5 h-5" />
             </button>
@@ -201,8 +189,8 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
             {isAuthenticated() && (
               <Link
                 to="/wishlist"
-                className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-green-500/10 hover:text-green-600"
-                style={{ color: 'var(--text-muted)' }}
+                className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                title="Wishlist"
               >
                 <HiOutlineHeart className="w-5 h-5" />
               </Link>
@@ -211,7 +199,7 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
             {/* Dark / Light Theme Toggle */}
             <button
               onClick={toggleDarkMode}
-              className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-green-500/10 text-green-600"
+              className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
               title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
               {darkMode ? (
@@ -221,13 +209,13 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
               )}
             </button>
 
-            {/* Cart */}
+            {/* Minimal Cart Button with Green Count Badge */}
             <button
               onClick={openCart}
-              className="relative w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-green-500/10 hover:text-green-600"
-              style={{ color: 'var(--text-secondary)' }}
+              className="relative w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-105 active:scale-95 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100"
+              title="Shopping Cart"
             >
-              <HiOutlineShoppingCart className="w-5 h-5" />
+              <HiOutlineShoppingCart className="w-6 h-6" />
               <AnimatePresence>
                 {totalItems > 0 && (
                   <motion.span
@@ -235,8 +223,7 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     exit={{ scale: 0 }}
-                    className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center text-white shadow-md"
-                    style={{ background: 'linear-gradient(135deg, #16A34A, #22C55E)' }}
+                    className="absolute -top-0.5 -right-0.5 min-w-[19px] h-[19px] px-1 rounded-full text-[10px] font-extrabold flex items-center justify-center text-white bg-green-600 shadow-sm"
                   >
                     {totalItems > 99 ? '99+' : totalItems}
                   </motion.span>
@@ -244,24 +231,28 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
               </AnimatePresence>
             </button>
 
-            {/* User */}
+            {/* Minimal Profile Button */}
             {isAuthenticated() ? (
               <div className="relative" ref={dropRef}>
                 <button
                   onClick={() => { setDropdownOpen(!dropdownOpen); setCatOpen(false) }}
-                  className="w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center transition-all duration-150 hover:ring-1"
-                  style={{ '--tw-ring-color': 'var(--gold-400)' }}
+                  className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                  title="My Account"
                 >
                   {user?.avatar?.url ? (
-                    <img src={user.avatar.url} alt={user.name} className="w-full h-full object-cover" />
+                    <img src={user.avatar.url} alt={user.name} className="w-8 h-8 rounded-full object-cover" />
                   ) : (
                     <div
-                      className="w-full h-full flex items-center justify-center text-sm font-bold"
-                      style={{ background: 'var(--border-subtle)', color: 'var(--gold-400)', fontFamily: 'var(--font-display)' }}
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white bg-slate-800 dark:bg-slate-200 dark:text-slate-900 shadow-sm"
+                      style={{ fontFamily: 'var(--font-heading)' }}
                     >
-                      {user?.name?.[0]?.toUpperCase()}
+                      {user?.name?.[0]?.toUpperCase() || 'U'}
                     </div>
                   )}
+                  <span className="hidden sm:inline text-xs font-bold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>
+                    {user?.name?.split(' ')[0]}
+                  </span>
+                  <HiChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${dropdownOpen ? 'rotate-180 text-slate-800 dark:text-slate-200' : ''}`} />
                 </button>
 
                 <AnimatePresence>
@@ -271,26 +262,24 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 8, scale: 0.97 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute top-full right-0 mt-2 w-52 card-glass rounded-xl overflow-hidden py-2"
-                      style={{ border: '1px solid var(--border)', boxShadow: '0 20px 60px rgba(0,0,0,0.8)' }}
+                      className="absolute top-full right-0 mt-2 w-56 rounded-2xl overflow-hidden py-2 shadow-2xl z-50 border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                     >
-                      <div className="px-4 py-2 mb-1">
-                        <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
+                      <div className="px-4 py-2.5 mb-1 bg-slate-50 dark:bg-slate-800/60">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white" style={{ fontFamily: 'var(--font-heading)' }}>
                           {user?.name}
                         </p>
-                        <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
+                        <p className="text-xs truncate text-slate-500">{user?.email}</p>
                       </div>
-                      <div className="divider-gold mx-3 mb-1" />
 
                       {/* Seller Portal Link */}
                       {isSeller() && (
                         <Link
                           to="/seller"
                           onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-sm transition-colors hover:bg-white/5"
-                          style={{ color: 'var(--gold-400)', fontFamily: 'var(--font-heading)', fontWeight: 600 }}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                          style={{ fontFamily: 'var(--font-heading)' }}
                         >
-                          <HiOutlineChartBar className="w-4 h-4" />
+                          <HiOutlineChartBar className="w-4 h-4 text-slate-400" />
                           Seller Dashboard
                         </Link>
                       )}
@@ -300,36 +289,37 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
                         <Link
                           to="/admin"
                           onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-sm transition-colors hover:bg-white/5"
-                          style={{ color: 'var(--gold-400)', fontFamily: 'var(--font-heading)', fontWeight: 600 }}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                          style={{ fontFamily: 'var(--font-heading)' }}
                         >
-                          <HiOutlineChartBar className="w-4 h-4" />
+                          <HiOutlineChartBar className="w-4 h-4 text-slate-400" />
                           Admin Dashboard
                         </Link>
                       )}
+
                       <Link
                         to="/profile"
                         onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2 text-sm transition-colors hover:bg-white/5"
-                        style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-display)' }}
+                        className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-700 dark:text-slate-300"
                       >
-                        <HiOutlineCog className="w-4 h-4" />
-                        Settings
+                        <HiOutlineCog className="w-4 h-4 text-slate-400" />
+                        Account Settings
                       </Link>
+
                       <Link
                         to="/orders"
                         onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2 text-sm transition-colors hover:bg-white/5"
-                        style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-display)' }}
+                        className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-700 dark:text-slate-300"
                       >
-                        <HiOutlineShoppingCart className="w-4 h-4" />
+                        <HiOutlineShoppingCart className="w-4 h-4 text-slate-400" />
                         My Orders
                       </Link>
-                      <div className="divider-gold mx-3 my-1" />
+
+                      <div className="h-px bg-slate-200 dark:bg-slate-800 mx-3 my-1.5" />
+
                       <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-2.5 px-4 py-2 text-sm transition-colors hover:bg-white/5"
-                        style={{ color: '#f87171', fontFamily: 'var(--font-display)' }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                       >
                         <HiOutlineLogout className="w-4 h-4" />
                         Sign Out
@@ -341,18 +331,18 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
             ) : (
               <Link
                 to="/login"
-                className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold ml-1 transition-all duration-200"
-                style={{ background: 'linear-gradient(135deg, var(--gold-300), var(--gold-400))', color: '#080808', fontFamily: 'var(--font-display)' }}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:opacity-90 transition-opacity"
+                style={{ fontFamily: 'var(--font-heading)' }}
               >
-                Sign In
+                <HiOutlineUser className="w-4 h-4" />
+                <span>Sign In</span>
               </Link>
             )}
 
             {/* Mobile menu toggle */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden w-9 h-9 rounded-lg flex items-center justify-center ml-1 transition-all hover:bg-white/5"
-              style={{ color: 'var(--text-muted)' }}
+              className="md:hidden w-10 h-10 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
             >
               {mobileOpen ? <HiOutlineX className="w-5 h-5" /> : <HiOutlineMenuAlt3 className="w-5 h-5" />}
             </button>
@@ -368,49 +358,56 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 pt-16"
-            style={{ background: 'rgba(8,8,8,0.97)', backdropFilter: 'blur(20px)' }}
+            className="fixed inset-0 z-40 pt-20"
+            style={{ background: 'var(--bg-primary)', backdropFilter: 'blur(20px)' }}
           >
-            <div className="page-container py-8 flex flex-col gap-2">
+            <div className="page-container py-6 flex flex-col gap-2">
               <Link
                 to="/products"
                 onClick={() => setMobileOpen(false)}
-                className="text-2xl font-bold py-3 border-b"
-                style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)', borderColor: 'var(--border-subtle)' }}
+                className="text-2xl font-bold py-3 border-b flex items-center justify-between"
+                style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
               >
-                Shop
+                <span>Shop Equipment</span>
+                <span className="text-green-600 text-lg">➔</span>
               </Link>
               <Link
                 to="/about"
                 onClick={() => setMobileOpen(false)}
-                className="text-2xl font-bold py-3 border-b"
-                style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)', borderColor: 'var(--border-subtle)' }}
+                className="text-2xl font-bold py-3 border-b flex items-center justify-between"
+                style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
               >
-                About
+                <span>About</span>
+                <span className="text-green-600 text-lg">➔</span>
               </Link>
               {isSeller() && (
-                <Link to="/seller" onClick={() => setMobileOpen(false)} className="text-xl font-bold py-3 text-gold-400 border-b" style={{ color: 'var(--gold-400)', borderColor: 'var(--border-subtle)' }}>
+                <Link to="/seller" onClick={() => setMobileOpen(false)} className="text-xl font-bold py-3 text-green-600 border-b" style={{ borderColor: 'var(--border)' }}>
                   ⚡ Seller Dashboard
+                </Link>
+              )}
+              {isAdmin() && (
+                <Link to="/admin" onClick={() => setMobileOpen(false)} className="text-xl font-bold py-3 text-green-700 border-b" style={{ borderColor: 'var(--border)' }}>
+                  🛡️ Admin Panel
                 </Link>
               )}
               <div className="divider-gold my-2" />
               <button
                 onClick={toggleDarkMode}
-                className="flex items-center justify-between py-3 border-b text-lg font-semibold"
-                style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)', borderColor: 'var(--border-subtle)' }}
+                className="flex items-center justify-between py-3 border-b text-base font-bold"
+                style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
               >
                 <span>Theme: {darkMode ? 'Dark Mode' : 'Light Mode'}</span>
-                <span className="p-2 rounded-xl" style={{ background: 'rgba(201,162,39,0.15)', color: 'var(--gold-400)' }}>
+                <span className="p-2 rounded-xl bg-green-500/10 text-green-600">
                   {darkMode ? <HiOutlineSun className="w-5 h-5" /> : <HiOutlineMoon className="w-5 h-5" />}
                 </span>
               </button>
               {!isAuthenticated() && (
                 <div className="flex flex-col gap-3 mt-4">
                   <div className="flex gap-3">
-                    <Link to="/login" onClick={() => setMobileOpen(false)} className="btn-primary flex-1 text-center">Sign In</Link>
-                    <Link to="/register" onClick={() => setMobileOpen(false)} className="btn-secondary flex-1 text-center">Register</Link>
+                    <Link to="/login" onClick={() => setMobileOpen(false)} className="btn-primary flex-1 text-center py-3">Sign In</Link>
+                    <Link to="/register" onClick={() => setMobileOpen(false)} className="btn-secondary flex-1 text-center py-3">Register</Link>
                   </div>
-                  <Link to="/register?role=seller" onClick={() => setMobileOpen(false)} className="text-xs text-center text-gold-400 hover:underline mt-2">
+                  <Link to="/register?role=seller" onClick={() => setMobileOpen(false)} className="text-xs text-center text-green-600 hover:underline mt-2 font-bold">
                     Become a Seller on PitchNepal
                   </Link>
                 </div>
