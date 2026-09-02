@@ -5,30 +5,30 @@ export default {
   theme: {
     extend: {
       colors: {
-        // PitchNepal Vibrant E-Commerce Palette
+        // PitchNepal Vibrant Cricket Green Palette
         primary: {
-          50: "#fff1f2",
-          100: "#ffe4e6",
-          200: "#fecdd3",
-          300: "#fda4af",
-          400: "#fb7185",
-          500: "#f43f5e",
-          600: "#e11d48",
-          700: "#be123c",
-          800: "#9f1239",
-          900: "#881337",
+          50: "#f0fdf4",
+          100: "#dcfce7",
+          200: "#bbf7d0",
+          300: "#86efac",
+          400: "#4ade80",
+          500: "#22c55e",
+          600: "#16a34a",
+          700: "#15803d",
+          800: "#166534",
+          900: "#14532d",
         },
-        sportsblue: {
-          50: "#eff6ff",
-          100: "#dbeafe",
-          200: "#bfdbfe",
-          300: "#93c5fd",
-          400: "#60a5fa",
-          500: "#3b82f6",
-          600: "#2563eb",
-          700: "#1d4ed8",
-          800: "#1e40af",
-          900: "#1e3a8a",
+        pitch: {
+          50: "#f0fdf4",
+          100: "#dcfce7",
+          200: "#bbf7d0",
+          300: "#86efac",
+          400: "#4ade80",
+          500: "#22c55e",
+          600: "#16a34a",
+          700: "#15803d",
+          800: "#166534",
+          900: "#14532d",
         },
         gold: {
           100: "#FEF9C3",
@@ -38,16 +38,16 @@ export default {
           500: "#F59E0B",
           600: "#D97706",
         },
-        leather: {
-          300: "#F97316",
-          400: "#EA580C",
-          500: "#C2410C",
+        cricketred: {
+          400: "#F87171",
+          500: "#EF4444",
+          600: "#DC2626",
         },
         dark: {
           700: "#334155",
           800: "#1E293B",
-          900: "#111827",
-          950: "#0B0F19",
+          900: "#0F172A",
+          950: "#080F0C",
         },
         surface: {
           50: "#f8fafc",
@@ -112,8 +112,7 @@ export default {
         },
       },
       boxShadow: {
-        "glow-red": "0 0 30px rgba(239, 68, 68, 0.35)",
-        "glow-blue": "0 0 30px rgba(37, 99, 235, 0.35)",
+        "glow-green": "0 0 30px rgba(34, 197, 94, 0.35)",
         "glow-gold": "0 0 30px rgba(245, 158, 11, 0.35)",
         card: "0 2px 12px rgba(0, 0, 0, 0.08)",
         "card-hover": "0 12px 32px rgba(0, 0, 0, 0.16)",

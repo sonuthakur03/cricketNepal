@@ -167,139 +167,6 @@ function CategoryCard({ cat, index }) {
 }
 
 /* ── Testimonial ─────────────────────────────────────────────── */
-/* ── Lightweight 2D PitchNepal Hero Emblem ────────────────────── */
-function PitchNepalHeroEmblem2D() {
-  return (
-    <div className="relative w-full max-w-lg mx-auto aspect-square flex items-center justify-center select-none">
-      {/* Background ambient gold radial glow */}
-      <div
-        className="absolute inset-0 rounded-full blur-3xl opacity-25 pointer-events-none"
-        style={{
-          background: 'radial-gradient(circle, var(--gold-400) 0%, rgba(201,162,39,0.05) 60%, transparent 80%)',
-        }}
-      />
-
-      {/* Outer Dashed Orbit Ring */}
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 45, repeat: Infinity, ease: 'linear' }}
-        className="absolute w-[86%] h-[86%] rounded-full border border-dashed pointer-events-none"
-        style={{ borderColor: 'rgba(201, 162, 39, 0.25)' }}
-      />
-
-      {/* Inner Rotating Ring */}
-      <motion.div
-        animate={{ rotate: -360 }}
-        transition={{ duration: 35, repeat: Infinity, ease: 'linear' }}
-        className="absolute w-[74%] h-[74%] rounded-full border pointer-events-none"
-        style={{ borderColor: 'rgba(201, 162, 39, 0.15)' }}
-      />
-
-      {/* Center 2D Medallion Card */}
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        whileHover={{ scale: 1.03 }}
-        className="relative z-10 w-[65%] h-[65%] rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-2xl backdrop-blur-xl"
-        style={{
-          background: 'linear-gradient(145deg, rgba(24, 24, 24, 0.95) 0%, rgba(10, 10, 10, 0.98) 100%)',
-          border: '1.5px solid rgba(201, 162, 39, 0.4)',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 35px rgba(201, 162, 39, 0.15)',
-        }}
-      >
-        {/* Golden Wicket & Seam SVG */}
-        <div className="relative mb-3 flex items-center justify-center">
-          <svg
-            className="w-20 h-20 filter drop-shadow-[0_4px_12px_rgba(201,162,39,0.45)]"
-            viewBox="0 0 100 100"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            {/* Top Bail */}
-            <rect x="22" y="16" width="56" height="5" rx="2.5" fill="url(#goldGradient)" />
-            {/* Stumps */}
-            <rect x="28" y="24" width="7" height="60" rx="3.5" fill="url(#goldGradient)" />
-            <rect x="46.5" y="24" width="7" height="60" rx="3.5" fill="url(#goldGradient)" />
-            <rect x="65" y="24" width="7" height="60" rx="3.5" fill="url(#goldGradient)" />
-            {/* Cricket Seam Accent Orbit */}
-            <path
-              d="M 12 50 C 12 28, 88 28, 88 50 C 88 72, 12 72, 12 50"
-              stroke="url(#goldGradient)"
-              strokeWidth="2"
-              strokeDasharray="4 3"
-              opacity="0.6"
-            />
-            <defs>
-              <linearGradient id="goldGradient" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stopColor="#F5E490" />
-                <stop offset="50%" stopColor="#C9A227" />
-                <stop offset="100%" stopColor="#8A6B0E" />
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
-
-        {/* Monogram Brand Headline */}
-        <h3
-          className="text-2xl font-bold tracking-wider uppercase mb-1"
-          style={{
-            fontFamily: '"Bebas Neue", sans-serif',
-            letterSpacing: '0.08em',
-            background: 'linear-gradient(135deg, #FFF 20%, #F5E490 60%, #C9A227 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}
-        >
-          PITCH NEPAL
-        </h3>
-        <p
-          className="text-[11px] font-semibold tracking-widest uppercase"
-          style={{ color: 'var(--gold-400)', fontFamily: 'var(--font-heading)', letterSpacing: '0.15em' }}
-        >
-          Est. 2024 · Kathmandu
-        </p>
-      </motion.div>
-
-      {/* Floating Badge 1 - Top Right */}
-      <motion.div
-        animate={{ y: [-4, 4, -4] }}
-        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute top-6 right-0 sm:right-2 z-20 px-3.5 py-2 rounded-2xl flex items-center gap-2 shadow-xl backdrop-blur-md"
-        style={{
-          background: 'rgba(20, 20, 20, 0.9)',
-          border: '1px solid rgba(201, 162, 39, 0.35)',
-          boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-        }}
-      >
-        <span className="text-base">🏏</span>
-        <div>
-          <p className="text-[10px] text-muted uppercase font-bold" style={{ letterSpacing: '0.05em' }}>Grade 1</p>
-          <p className="text-xs font-bold text-white" style={{ fontFamily: 'var(--font-heading)' }}>English Willow</p>
-        </div>
-      </motion.div>
-
-      {/* Floating Badge 2 - Bottom Left */}
-      <motion.div
-        animate={{ y: [4, -4, 4] }}
-        transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute bottom-8 left-0 sm:left-2 z-20 px-3.5 py-2 rounded-2xl flex items-center gap-2 shadow-xl backdrop-blur-md"
-        style={{
-          background: 'rgba(20, 20, 20, 0.9)',
-          border: '1px solid rgba(201, 162, 39, 0.35)',
-          boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-        }}
-      >
-        <span className="text-base">🇳🇵</span>
-        <div>
-          <p className="text-[10px] text-muted uppercase font-bold" style={{ letterSpacing: '0.05em' }}>Nationwide</p>
-          <p className="text-xs font-bold text-white" style={{ fontFamily: 'var(--font-heading)' }}>7 Provinces Delivery</p>
-        </div>
-      </motion.div>
-    </div>
-  )
-}
-
 /* ── Testimonial ─────────────────────────────────────────────── */
 const TESTIMONIALS = [
   { name: 'Rohan Thapa', role: 'Club Captain, Lalitpur CC', text: 'PitchNepal has the best selection of SG bats in all of Nepal. Top quality, fast delivery!', rating: 5 },
@@ -327,112 +194,130 @@ export default function HomePage() {
     <div className="relative overflow-x-hidden" style={{ background: 'var(--bg-primary)' }}>
 
       {/* ═══════════════════════════════════════════════════
-          HERO SECTION — Lightweight 2D Emblem + Parallax
+          HERO SECTION — Text-Driven Pure Sports Showcase
       ════════════════════════════════════════════════════ */}
       <section
         ref={heroRef}
-        className="relative min-h-screen flex items-center overflow-hidden"
-        style={{ background: 'radial-gradient(ellipse at 70% 50%, rgba(201,162,39,0.06) 0%, rgba(8,8,8,0) 70%), var(--bg-primary)' }}
+        className="relative min-h-[92vh] flex items-center justify-center overflow-hidden pt-24 pb-16"
+        style={{ background: 'radial-gradient(ellipse at 50% 30%, rgba(34,197,94,0.08) 0%, rgba(8,15,12,0) 70%), var(--bg-primary)' }}
       >
-        {/* Background grid */}
+        {/* Subtle Turf Grid */}
         <div className="absolute inset-0" style={{
-          backgroundImage: 'linear-gradient(rgba(220,38,38,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.04) 1px, transparent 1px)',
-          backgroundSize: '60px 60px',
+          backgroundImage: 'linear-gradient(rgba(34,197,94,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(34,197,94,0.04) 1px, transparent 1px)',
+          backgroundSize: '48px 48px',
         }} />
 
-        {/* Vibrant sports radial glows */}
-        <div className="absolute top-1/3 right-[20%] w-[500px] h-[500px] rounded-full blur-3xl opacity-20 pointer-events-none" style={{ background: 'radial-gradient(circle, #DC2626 0%, transparent 70%)' }} />
-        <div className="absolute bottom-1/4 left-[10%] w-[450px] h-[450px] rounded-full blur-3xl opacity-15 pointer-events-none" style={{ background: 'radial-gradient(circle, #2563EB 0%, transparent 70%)' }} />
+        {/* Ambient Cricket Turf Glow */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[350px] rounded-full blur-3xl opacity-20 pointer-events-none" style={{ background: 'radial-gradient(circle, #22C55E 0%, transparent 70%)' }} />
 
-        <motion.div style={{ opacity: heroOpacity, y: heroY }} className="page-container relative z-10 grid lg:grid-cols-2 gap-12 items-center pt-20 pb-16">
-          {/* Text */}
-          <div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="section-label mb-6"
-            >
-              <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
-              Nepal Premier Cricket Destination
-            </motion.div>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="mb-6"
-              style={{
-                fontFamily: '"Bebas Neue", sans-serif',
-                fontSize: 'clamp(3.5rem, 7vw, 6.5rem)',
-                letterSpacing: '0.05em',
-                lineHeight: '0.95',
-                textTransform: 'uppercase',
-              }}
-            >
-              <span style={{ color: 'var(--text-primary)' }}>Play Like</span>
-              <br />
-              <span className="text-gold-gradient">Legends</span>
-              <span style={{ color: 'var(--text-primary)' }}>.</span>
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.35 }}
-              className="text-lg mb-8 max-w-lg"
-              style={{ color: 'var(--text-secondary)', lineHeight: '1.7' }}
-            >
-              From English Willow bats to titanium helmets, world class cricket equipment
-              delivered across all 7 provinces of Nepal.
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="flex flex-wrap gap-3"
-            >
-              <Link to="/products" className="btn-primary text-base px-8 py-3.5">
-                Shop Now <HiArrowRight className="w-4 h-4" />
-              </Link>
-              <Link to="/about" className="btn-secondary text-base px-8 py-3.5">
-                Our Story
-              </Link>
-            </motion.div>
-
-            {/* Trust badges */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8, duration: 0.5 }}
-              className="flex flex-wrap gap-6 mt-10"
-            >
-              {[
-                { label: 'Free shipping', sub: 'Orders above NPR 5,000' },
-                { label: 'Authentic gear', sub: 'Verified original brands' },
-                { label: 'Fast delivery', sub: 'Across all Nepal' },
-              ].map((t) => (
-                <div key={t.label} className="flex items-center gap-2">
-                  <div className="w-1.5 h-6 rounded-full" style={{ background: 'linear-gradient(to bottom, var(--gold-300), var(--gold-500))' }} />
-                  <div>
-                    <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>{t.label}</p>
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t.sub}</p>
-                  </div>
-                </div>
-              ))}
-            </motion.div>
-          </div>
-
-          {/* Lightweight 2D Website Logo Emblem */}
+        <motion.div style={{ opacity: heroOpacity, y: heroY }} className="page-container relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto">
+          
+          {/* Top Pill / Certification Badge */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="relative flex items-center justify-center py-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="section-label mb-6 shadow-sm"
           >
-            <PitchNepalHeroEmblem2D />
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            Nepal's Premier Cricket Vault · 7 Provinces Delivery
           </motion.div>
+
+          {/* Big Headline */}
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="mb-6 font-display"
+            style={{
+              fontSize: 'clamp(3.8rem, 8.5vw, 7.2rem)',
+              letterSpacing: '0.04em',
+              lineHeight: '0.92',
+              textTransform: 'uppercase',
+            }}
+          >
+            <span style={{ color: 'var(--text-primary)' }}>Gear Up For Glory.</span>
+            <br />
+            <span className="text-gold-gradient">Play Like Legends.</span>
+          </motion.h1>
+
+          {/* Subtitle */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.35 }}
+            className="text-lg md:text-xl mb-8 max-w-2xl leading-relaxed"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            From Grade 1 English Willow bats and titanium helmets to match-ready leather balls.
+            Authentic cricket equipment delivered straight to your club and doorstep across Nepal.
+          </motion.p>
+
+          {/* CTAs */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            className="flex flex-wrap items-center justify-center gap-4 mb-10"
+          >
+            <Link to="/products" className="btn-primary text-base px-8 py-4 shadow-lg hover:shadow-green-500/25">
+              Explore All Equipment <HiArrowRight className="w-5 h-5" />
+            </Link>
+            <Link to="/products?category=Bats" className="btn-secondary text-base px-8 py-4">
+              🏏 English Willow Bats
+            </Link>
+          </motion.div>
+
+          {/* Quick-Category Navigation Bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.65 }}
+            className="flex flex-wrap justify-center gap-2 max-w-3xl mb-12"
+          >
+            {[
+              { name: 'Bats', emoji: '🏏' },
+              { name: 'Balls', emoji: '🔴' },
+              { name: 'Gloves', emoji: '🧤' },
+              { name: 'Pads', emoji: '🦵' },
+              { name: 'Helmets', emoji: '⛑️' },
+              { name: 'Jerseys', emoji: '👕' },
+              { name: 'Shoes', emoji: '👟' },
+              { name: 'Accessories', emoji: '🎒' },
+            ].map((cat) => (
+              <Link
+                key={cat.name}
+                to={`/products?category=${cat.name}`}
+                className="pill px-3.5 py-1.5 text-xs font-bold hover:scale-105 hover:bg-green-500/10 hover:text-green-600 hover:border-green-500 transition-all duration-200"
+                style={{ fontFamily: 'var(--font-heading)' }}
+              >
+                <span className="mr-1">{cat.emoji}</span> {cat.name}
+              </Link>
+            ))}
+          </motion.div>
+
+          {/* E-Commerce Trust Badges */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
+            className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full pt-8 border-t"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            {[
+              { title: 'Free Delivery', desc: 'Orders above NPR 5,000', icon: '🚚' },
+              { title: '100% Authentic', desc: 'Verified Original Brands', icon: '🛡️' },
+              { title: 'Easy Payments', desc: 'Khalti, eSewa & COD', icon: '💳' },
+              { title: 'Nationwide Delivery', desc: 'Across All 7 Provinces', icon: '🇳🇵' },
+            ].map((item) => (
+              <div key={item.title} className="flex flex-col items-center text-center p-3 rounded-xl bg-card border border-border">
+                <span className="text-xl mb-1">{item.icon}</span>
+                <p className="text-xs font-bold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>{item.title}</p>
+                <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{item.desc}</p>
+              </div>
+            ))}
+          </motion.div>
+
         </motion.div>
 
         {/* Scroll indicator */}
@@ -664,7 +549,7 @@ export default function HomePage() {
                 className="card-glass p-6"
               >
                 <div className="flex gap-0.5 mb-4">
-                  {[...Array(t.rating)].map((_, j) => <HiStar key={j} className="w-4 h-4" style={{ color: 'var(--gold-400)' }} />)}
+                  {[...Array(t.rating)].map((_, j) => <HiStar key={j} className="w-4 h-4" style={{ color: '#F59E0B' }} />)}
                 </div>
                 <p className="text-base mb-5 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                   "{t.text}"
@@ -672,7 +557,7 @@ export default function HomePage() {
                 <div className="flex items-center gap-3">
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                    style={{ background: 'rgba(201,162,39,0.15)', color: 'var(--gold-400)', fontFamily: 'var(--font-heading)' }}
+                    style={{ background: 'rgba(34,197,94,0.15)', color: '#16A34A', fontFamily: 'var(--font-heading)' }}
                   >
                     {t.name[0]}
                   </div>
@@ -691,7 +576,7 @@ export default function HomePage() {
           CTA SECTION
       ════════════════════════════════════════════════════ */}
       <section className="py-24 relative overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
-        <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(ellipse at center, rgba(201,162,39,0.1) 0%, transparent 70%)' }} />
+        <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(ellipse at center, rgba(34,197,94,0.12) 0%, transparent 70%)' }} />
         <div className="page-container text-center relative">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -719,7 +604,7 @@ export default function HomePage() {
             <div className="flex flex-wrap gap-4 justify-center">
               <Link
                 to="/products"
-                className="btn-primary text-base px-10 py-4 animate-pulse-gold"
+                className="btn-primary text-base px-10 py-4 shadow-lg hover:shadow-green-500/25"
               >
                 Shop the Collection <HiArrowRight className="w-5 h-5" />
               </Link>

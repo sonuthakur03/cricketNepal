@@ -19,7 +19,7 @@ const NAV_LINKS = [
 
 const CATEGORIES = ['Bats', 'Balls', 'Gloves', 'Pads', 'Helmets', 'Jerseys', 'Shoes', 'Accessories']
 
-// PN Wicket Logo SVG — Vibrant Cricket Crimson & Gold
+// PN Wicket Logo SVG — Vibrant Cricket Green
 function PNLogo({ size = 36 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -35,8 +35,8 @@ function PNLogo({ size = 36 }) {
       <rect x="8" y="27" width="24" height="1.5" rx="0.75" fill="rgba(255,255,255,0.8)" />
       <defs>
         <linearGradient id="logoGrad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#DC2626" />
-          <stop offset="100%" stopColor="#991B1B" />
+          <stop offset="0%" stopColor="#22C55E" />
+          <stop offset="100%" stopColor="#15803D" />
         </linearGradient>
       </defs>
     </svg>
@@ -97,7 +97,7 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
     <>
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled ? 'nav-glass shadow-2xl' : 'bg-transparent'
+          scrolled ? 'nav-glass shadow-xl' : 'bg-transparent'
         }`}
       >
         <div className="page-container flex items-center justify-between h-16 md:h-18">
@@ -111,10 +111,10 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
                 className="text-xl font-bold tracking-tight"
                 style={{ fontFamily: 'var(--font-heading)', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}
               >
-                Pitch<span style={{ color: 'var(--gold-400)' }}>Nepal</span>
+                Pitch<span style={{ color: '#16A34A' }}>Nepal</span>
               </span>
-              <span className="text-[10px] tracking-[0.16em] uppercase font-semibold" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-heading)' }}>
-                Premium Cricket
+              <span className="text-[10px] tracking-[0.16em] uppercase font-semibold text-green-600" style={{ fontFamily: 'var(--font-heading)' }}>
+                Cricket Vault
               </span>
             </div>
           </Link>
@@ -125,11 +125,11 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
               to="/products"
               className={({ isActive }) =>
                 `px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 ${
-                  isActive ? 'text-primary-600 bg-red-500/10' : 'hover:text-primary-600'
+                  isActive ? 'text-green-600 bg-green-500/10' : 'hover:text-green-600'
                 }`
               }
               style={({ isActive }) => ({
-                color: isActive ? '#DC2626' : 'var(--text-secondary)',
+                color: isActive ? '#16A34A' : 'var(--text-secondary)',
                 fontFamily: 'var(--font-heading)',
               })}
             >
@@ -140,11 +140,11 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
               to="/about"
               className={({ isActive }) =>
                 `px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 ${
-                  isActive ? 'text-primary-600 bg-red-500/10' : 'hover:text-primary-600'
+                  isActive ? 'text-green-600 bg-green-500/10' : 'hover:text-green-600'
                 }`
               }
               style={({ isActive }) => ({
-                color: isActive ? '#DC2626' : 'var(--text-secondary)',
+                color: isActive ? '#16A34A' : 'var(--text-secondary)',
                 fontFamily: 'var(--font-heading)',
               })}
             >
@@ -156,7 +156,7 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
                 to="/seller"
                 className={({ isActive }) =>
                   `px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase transition-all duration-150 ml-2 ${
-                    isActive ? 'bg-primary-600 text-white' : 'bg-red-500/10 text-primary-600 border border-primary-500/30 hover:bg-primary-500/20'
+                    isActive ? 'bg-green-600 text-white' : 'bg-green-500/10 text-green-600 border border-green-500/30 hover:bg-green-500/20'
                   }`
                 }
                 style={{
@@ -173,7 +173,7 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
                 to="/admin"
                 className={({ isActive }) =>
                   `px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase transition-all duration-150 ml-2 ${
-                    isActive ? 'bg-blue-600 text-white' : 'bg-blue-500/10 text-blue-500 border border-blue-500/30 hover:bg-blue-500/20'
+                    isActive ? 'bg-green-700 text-white' : 'bg-green-500/10 text-green-700 border border-green-500/30 hover:bg-green-500/20'
                   }`
                 }
                 style={{
@@ -191,7 +191,7 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
             {/* Search */}
             <button
               onClick={() => setSearchOpen(true)}
-              className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-red-500/10 hover:text-primary-600"
+              className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-green-500/10 hover:text-green-600"
               style={{ color: 'var(--text-muted)' }}
             >
               <HiOutlineSearch className="w-5 h-5" />
@@ -201,7 +201,7 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
             {isAuthenticated() && (
               <Link
                 to="/wishlist"
-                className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-red-500/10 hover:text-primary-600"
+                className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-green-500/10 hover:text-green-600"
                 style={{ color: 'var(--text-muted)' }}
               >
                 <HiOutlineHeart className="w-5 h-5" />
@@ -211,7 +211,7 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
             {/* Dark / Light Theme Toggle */}
             <button
               onClick={toggleDarkMode}
-              className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-amber-500/10 text-amber-500"
+              className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-green-500/10 text-green-600"
               title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
               {darkMode ? (
@@ -224,7 +224,7 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
             {/* Cart */}
             <button
               onClick={openCart}
-              className="relative w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-red-500/10 hover:text-primary-600"
+              className="relative w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-green-500/10 hover:text-green-600"
               style={{ color: 'var(--text-secondary)' }}
             >
               <HiOutlineShoppingCart className="w-5 h-5" />
@@ -236,7 +236,7 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
                     animate={{ scale: 1 }}
                     exit={{ scale: 0 }}
                     className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center text-white shadow-md"
-                    style={{ background: 'linear-gradient(135deg, #DC2626, #EF4444)' }}
+                    style={{ background: 'linear-gradient(135deg, #16A34A, #22C55E)' }}
                   >
                     {totalItems > 99 ? '99+' : totalItems}
                   </motion.span>

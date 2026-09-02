@@ -134,11 +134,11 @@ export default function ProductCard({ product, index = 0 }) {
 
         {/* Content */}
         <div className="p-4">
-          <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: '#2563EB', fontFamily: 'var(--font-heading)', letterSpacing: '0.04em' }}>
+          <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: '#16A34A', fontFamily: 'var(--font-heading)', letterSpacing: '0.04em' }}>
             {product.brand}
           </p>
           <Link to={`/products/${product.slug || product._id}`}>
-            <h3 className="font-bold text-sm leading-snug line-clamp-2 mb-2 transition-colors duration-150 hover:text-primary-600"
+            <h3 className="font-bold text-sm leading-snug line-clamp-2 mb-2 transition-colors duration-150 hover:text-green-600"
               style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
               {product.name}
             </h3>
@@ -147,7 +147,7 @@ export default function ProductCard({ product, index = 0 }) {
           <StarRating rating={product.rating} count={product.numReviews} />
 
           <div className="flex items-center gap-2 mt-2 mb-3">
-            <span className="text-base font-bold" style={{ color: '#DC2626', fontFamily: 'var(--font-mono)' }}>
+            <span className="text-base font-bold" style={{ color: '#16A34A', fontFamily: 'var(--font-mono)' }}>
               {formatPrice(finalPrice)}
             </span>
             {hasDiscount && (
