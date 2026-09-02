@@ -28,8 +28,8 @@ const initiateEsewaPayment = asyncHandler(async (req, res) => {
     throw new Error("Order already paid");
   }
 
-  const merchantCode = process.env.ESEWA_MERCHANT_ID || "EPAYTEST";
-  const secretKey = process.env.ESEWA_SECRET_KEY || "8gBm/:&EnhH.1/q";
+  const merchantCode = (process.env.ESEWA_MERCHANT_ID || "EPAYTEST").trim();
+  const secretKey = (process.env.ESEWA_SECRET_KEY || "8gBm/:&EnhH.1/q").trim();
   const frontendUrl = (
     process.env.FRONTEND_URL || "http://localhost:5173"
   )
@@ -38,9 +38,6 @@ const initiateEsewaPayment = asyncHandler(async (req, res) => {
     .replace(/\/$/, "");
 
   // ── IMPORTANT: transaction_uuid must be unique per attempt ─────────────────
-  // Using only order._id causes "Duplicate transaction UUID" on retry.
-  // Append a short timestamp suffix so each attempt gets a fresh UUID.
-  // We store it on the order so we can look it up on callback.
   const transactionUUID = `${order._id}-${Date.now()}`;
 
   // Save the UUID on the order so callback can find the order from it
@@ -50,45 +47,41 @@ const initiateEsewaPayment = asyncHandler(async (req, res) => {
   };
   await order.save();
 
-  const amount = Math.round(order.itemsPrice);
-  const taxAmount = Math.round(order.taxPrice);
-  const deliveryCharge = Math.round(order.shippingPrice);
-  const totalAmount = Math.round(order.totalPrice);
+  // eSewa v2 requires total_amount = amount + tax_amount + product_service_charge + product_delivery_charge exactly
+  const amount = Math.round(Number(order.itemsPrice || 0));
+  const taxAmount = Math.round(Number(order.taxPrice || 0));
+  const deliveryCharge = Math.round(Number(order.shippingPrice || 0));
+  const serviceCharge = 0;
+  const totalAmount = amount + taxAmount + serviceCharge + deliveryCharge;
   const productCode = merchantCode;
 
   const signatureMessage = `total_amount=${totalAmount},transaction_uuid=${transactionUUID},product_code=${productCode}`;
   const signature = generateEsewaSignature(signatureMessage, secretKey);
 
-  // success_url — eSewa will append ?data=BASE64 to this URL
-  // We include orderId so the callback page can find the order
-  // Clean URLs — no query params so eSewa can append ?data=BASE64 cleanly
   const successUrl = `${frontendUrl}/payment/esewa/success`;
   const failureUrl = `${frontendUrl}/payment/esewa/failure`;
 
-  // eSewa payment URL
-  // ESEWA_BASE_URL can be either:
-  //   https://rc-epay.esewa.com.np                        (just the domain)
-  //   https://rc-epay.esewa.com.np/api/epay/main/v2/form  (full URL)
-  const esewaBase =
-    process.env.ESEWA_BASE_URL || "https://rc-epay.esewa.com.np";
+  const esewaBase = (
+    process.env.ESEWA_BASE_URL || "https://rc-epay.esewa.com.np"
+  ).trim();
   const paymentUrl = esewaBase.includes("/api/epay")
-    ? esewaBase // already the full URL
-    : `${esewaBase}/api/epay/main/v2/form`;
+    ? esewaBase
+    : `${esewaBase.replace(/\/$/, "")}/api/epay/main/v2/form`;
 
   res.status(200).json({
     success: true,
     data: {
-      amount,
-      tax_amount: taxAmount,
-      product_service_charge: 0,
-      product_delivery_charge: deliveryCharge,
-      total_amount: totalAmount,
-      transaction_uuid: transactionUUID,
-      product_code: productCode,
-      success_url: successUrl,
-      failure_url: failureUrl,
+      amount: String(amount),
+      tax_amount: String(taxAmount),
+      product_service_charge: String(serviceCharge),
+      product_delivery_charge: String(deliveryCharge),
+      total_amount: String(totalAmount),
+      transaction_uuid: String(transactionUUID),
+      product_code: String(productCode),
+      success_url: String(successUrl),
+      failure_url: String(failureUrl),
       signed_field_names: "total_amount,transaction_uuid,product_code",
-      signature,
+      signature: String(signature),
       payment_url: paymentUrl,
     },
   });

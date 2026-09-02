@@ -146,14 +146,21 @@ const initiateKhaltiPayment = asyncHandler(async (req, res) => {
 
   const returnUrl = `${frontendBase}/payment/khalti/callback?orderId=${order._id}`;
 
-  const rawKey =
-    process.env.KHALTI_SECRET_KEY ||
-    "Key 825405e3ec9744c8b21c4355204481b4";
+  let rawKey = (process.env.KHALTI_SECRET_KEY || "").trim();
+  if (!rawKey || rawKey.includes("xxxxxxxx") || rawKey.length < 15) {
+    rawKey = "Key 825405e3ec9744c8b21c4355204481b4";
+  }
   const authHeader = rawKey.startsWith("Key ") ? rawKey : `Key ${rawKey}`;
 
-  // Khalti requires a 10-digit mobile number (e.g. 98XXXXXXXX)
-  const rawPhone = order.shippingAddress?.phone || "";
-  const cleanPhone = rawPhone.replace(/\D/g, "").slice(-10) || "9800000000";
+  // Khalti v2 strictly validates a 10-digit Nepali mobile number starting with 98/97/96
+  let cleanPhone = (order.shippingAddress?.phone || "").replace(/\D/g, "");
+  if (cleanPhone.length > 10) cleanPhone = cleanPhone.slice(-10);
+  if (
+    cleanPhone.length !== 10 ||
+    !["98", "97", "96"].includes(cleanPhone.slice(0, 2))
+  ) {
+    cleanPhone = "9800000000";
+  }
   const customerName =
     order.shippingAddress?.fullName || req.user?.name || "Cricket Customer";
 
@@ -163,13 +170,13 @@ const initiateKhaltiPayment = asyncHandler(async (req, res) => {
       {
         return_url: returnUrl,
         website_url: frontendBase,
-        amount: Math.round(order.totalPrice * 100), // in paisa
+        amount: Math.round(Number(order.totalPrice || 0) * 100), // in paisa
         purchase_order_id: order._id.toString(),
         purchase_order_name: `Pitch Nepal Order #${order._id.toString().slice(-8).toUpperCase()}`,
         customer_info: {
           name: customerName,
           phone: cleanPhone,
-          email: req.user?.email || "support@pitchnepal.com",
+          email: req.user?.email || "customer@pitchnepal.com",
         },
       },
       {
