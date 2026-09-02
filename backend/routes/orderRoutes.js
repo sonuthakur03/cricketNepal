@@ -16,6 +16,11 @@ const {
 } = require("../controllers/orderController");
 const { protect, authorize } = require("../middleware/auth");
 
+const {
+  initiateEsewaPayment,
+  verifyEsewaPayment,
+} = require("../controllers/esewaController");
+
 // Named routes BEFORE /:id
 router.post("/", protect, createOrder);
 router.get("/my-orders", protect, getMyOrders);
@@ -33,6 +38,16 @@ router.get("/:id", protect, getOrder);
 // Payment — Khalti v2 (two-step: initiate → redirect → verify)
 router.post("/:id/pay/khalti/initiate", protect, initiateKhaltiPayment);
 router.post("/:id/pay/khalti/verify", protect, verifyKhaltiPayment);
+
+// Payment — eSewa v2 (two-step: initiate → redirect → verify)
+router.post("/:id/pay/esewa/initiate", protect, (req, res, next) => {
+  req.params.orderId = req.params.id;
+  return initiateEsewaPayment(req, res, next);
+});
+router.post("/:id/pay/esewa/verify", protect, (req, res, next) => {
+  req.params.orderId = req.params.id;
+  return verifyEsewaPayment(req, res, next);
+});
 
 // Order actions
 router.put("/:id/cancel", protect, cancelOrder);

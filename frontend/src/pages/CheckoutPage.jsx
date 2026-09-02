@@ -115,10 +115,11 @@ export default function CheckoutPage() {
     const form = document.createElement("form");
     form.method = "POST";
     form.action =
+      formData.payment_url ||
       formData.esewa_url ||
       "https://rc-epay.esewa.com.np/api/epay/main/v2/form";
     Object.entries(formData).forEach(([k, v]) => {
-      if (k === "esewa_url") return;
+      if (k === "esewa_url" || k === "payment_url") return;
       const inp = document.createElement("input");
       inp.type = "hidden";
       inp.name = k;

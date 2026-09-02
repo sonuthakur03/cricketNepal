@@ -30,7 +30,12 @@ const initiateEsewaPayment = asyncHandler(async (req, res) => {
 
   const merchantCode = process.env.ESEWA_MERCHANT_ID || "EPAYTEST";
   const secretKey = process.env.ESEWA_SECRET_KEY || "8gBm/:&EnhH.1/q";
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const frontendUrl = (
+    process.env.FRONTEND_URL || "http://localhost:5173"
+  )
+    .split(",")[0]
+    .trim()
+    .replace(/\/$/, "");
 
   // ── IMPORTANT: transaction_uuid must be unique per attempt ─────────────────
   // Using only order._id causes "Duplicate transaction UUID" on retry.

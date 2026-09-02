@@ -137,23 +137,47 @@ const initiateKhaltiPayment = asyncHandler(async (req, res) => {
     throw new Error("Order already paid");
   }
 
-  const returnUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/payment/khalti/callback?orderId=${order._id}`;
+  const frontendBase = (
+    process.env.FRONTEND_URL || "http://localhost:5173"
+  )
+    .split(",")[0]
+    .trim()
+    .replace(/\/$/, "");
+
+  const returnUrl = `${frontendBase}/payment/khalti/callback?orderId=${order._id}`;
+
+  const rawKey =
+    process.env.KHALTI_SECRET_KEY ||
+    "Key 825405e3ec9744c8b21c4355204481b4";
+  const authHeader = rawKey.startsWith("Key ") ? rawKey : `Key ${rawKey}`;
+
+  // Khalti requires a 10-digit mobile number (e.g. 98XXXXXXXX)
+  const rawPhone = order.shippingAddress?.phone || "";
+  const cleanPhone = rawPhone.replace(/\D/g, "").slice(-10) || "9800000000";
+  const customerName =
+    order.shippingAddress?.fullName || req.user?.name || "Cricket Customer";
 
   try {
     const { data } = await axios.post(
       "https://a.khalti.com/api/v2/epayment/initiate/",
       {
         return_url: returnUrl,
-        website_url: process.env.FRONTEND_URL || "http://localhost:5173",
+        website_url: frontendBase,
         amount: Math.round(order.totalPrice * 100), // in paisa
         purchase_order_id: order._id.toString(),
         purchase_order_name: `Pitch Nepal Order #${order._id.toString().slice(-8).toUpperCase()}`,
         customer_info: {
-          name: order.shippingAddress.fullName,
-          phone: order.shippingAddress.phone,
+          name: customerName,
+          phone: cleanPhone,
+          email: req.user?.email || "support@pitchnepal.com",
         },
       },
-      { headers: { Authorization: `Key ${process.env.KHALTI_SECRET_KEY}` } },
+      {
+        headers: {
+          Authorization: authHeader,
+          "Content-Type": "application/json",
+        },
+      },
     );
 
     res.status(200).json({
@@ -161,9 +185,13 @@ const initiateKhaltiPayment = asyncHandler(async (req, res) => {
       data: { payment_url: data.payment_url, pidx: data.pidx },
     });
   } catch (err) {
-    const msg = err.response?.data
-      ? JSON.stringify(err.response.data)
+    const errData = err.response?.data;
+    const msg = errData
+      ? typeof errData === "object"
+        ? JSON.stringify(errData)
+        : errData
       : err.message;
+    console.error("[Khalti initiate error]:", msg);
     res.status(502);
     throw new Error(`Khalti initiation failed: ${msg}`);
   }
@@ -193,11 +221,21 @@ const verifyKhaltiPayment = asyncHandler(async (req, res) => {
     throw new Error("Missing pidx");
   }
 
+  const rawKey =
+    process.env.KHALTI_SECRET_KEY ||
+    "Key 825405e3ec9744c8b21c4355204481b4";
+  const authHeader = rawKey.startsWith("Key ") ? rawKey : `Key ${rawKey}`;
+
   try {
     const { data } = await axios.post(
       "https://a.khalti.com/api/v2/epayment/lookup/",
       { pidx },
-      { headers: { Authorization: `Key ${process.env.KHALTI_SECRET_KEY}` } },
+      {
+        headers: {
+          Authorization: authHeader,
+          "Content-Type": "application/json",
+        },
+      },
     );
 
     if (data.status !== "Completed") {
