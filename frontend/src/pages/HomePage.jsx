@@ -1,6 +1,6 @@
-// src/pages/HomePage.jsx — Premium redesign with CricketHero3D, Bebas Neue + Outfit typography, clean hyphen-free copy
+// src/pages/HomePage.jsx — Lightweight 2D hero redesign with Bebas Neue + Outfit typography, clean hyphen-free copy
 
-import { useRef, useEffect, useState, lazy, Suspense } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { HiArrowRight, HiStar, HiOutlineArrowRight } from 'react-icons/hi'
@@ -10,9 +10,6 @@ import { StarRating } from '../components/common/UI'
 import useCartStore from '../context/cartStore'
 import useAuthStore from '../context/authStore'
 import toast from 'react-hot-toast'
-
-// Lazy load 3D Website Logo Emblem
-const PitchNepalLogo3D = lazy(() => import('../components/three/PitchNepalLogo3D'))
 
 /* ── Animated counter ─────────────────────────────────────────── */
 function Counter({ end, suffix = '', duration = 2 }) {
@@ -170,6 +167,140 @@ function CategoryCard({ cat, index }) {
 }
 
 /* ── Testimonial ─────────────────────────────────────────────── */
+/* ── Lightweight 2D PitchNepal Hero Emblem ────────────────────── */
+function PitchNepalHeroEmblem2D() {
+  return (
+    <div className="relative w-full max-w-lg mx-auto aspect-square flex items-center justify-center select-none">
+      {/* Background ambient gold radial glow */}
+      <div
+        className="absolute inset-0 rounded-full blur-3xl opacity-25 pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, var(--gold-400) 0%, rgba(201,162,39,0.05) 60%, transparent 80%)',
+        }}
+      />
+
+      {/* Outer Dashed Orbit Ring */}
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 45, repeat: Infinity, ease: 'linear' }}
+        className="absolute w-[86%] h-[86%] rounded-full border border-dashed pointer-events-none"
+        style={{ borderColor: 'rgba(201, 162, 39, 0.25)' }}
+      />
+
+      {/* Inner Rotating Ring */}
+      <motion.div
+        animate={{ rotate: -360 }}
+        transition={{ duration: 35, repeat: Infinity, ease: 'linear' }}
+        className="absolute w-[74%] h-[74%] rounded-full border pointer-events-none"
+        style={{ borderColor: 'rgba(201, 162, 39, 0.15)' }}
+      />
+
+      {/* Center 2D Medallion Card */}
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        whileHover={{ scale: 1.03 }}
+        className="relative z-10 w-[65%] h-[65%] rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-2xl backdrop-blur-xl"
+        style={{
+          background: 'linear-gradient(145deg, rgba(24, 24, 24, 0.95) 0%, rgba(10, 10, 10, 0.98) 100%)',
+          border: '1.5px solid rgba(201, 162, 39, 0.4)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 35px rgba(201, 162, 39, 0.15)',
+        }}
+      >
+        {/* Golden Wicket & Seam SVG */}
+        <div className="relative mb-3 flex items-center justify-center">
+          <svg
+            className="w-20 h-20 filter drop-shadow-[0_4px_12px_rgba(201,162,39,0.45)]"
+            viewBox="0 0 100 100"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            {/* Top Bail */}
+            <rect x="22" y="16" width="56" height="5" rx="2.5" fill="url(#goldGradient)" />
+            {/* Stumps */}
+            <rect x="28" y="24" width="7" height="60" rx="3.5" fill="url(#goldGradient)" />
+            <rect x="46.5" y="24" width="7" height="60" rx="3.5" fill="url(#goldGradient)" />
+            <rect x="65" y="24" width="7" height="60" rx="3.5" fill="url(#goldGradient)" />
+            {/* Cricket Seam Accent Orbit */}
+            <path
+              d="M 12 50 C 12 28, 88 28, 88 50 C 88 72, 12 72, 12 50"
+              stroke="url(#goldGradient)"
+              strokeWidth="2"
+              strokeDasharray="4 3"
+              opacity="0.6"
+            />
+            <defs>
+              <linearGradient id="goldGradient" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#F5E490" />
+                <stop offset="50%" stopColor="#C9A227" />
+                <stop offset="100%" stopColor="#8A6B0E" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        {/* Monogram Brand Headline */}
+        <h3
+          className="text-2xl font-bold tracking-wider uppercase mb-1"
+          style={{
+            fontFamily: '"Bebas Neue", sans-serif',
+            letterSpacing: '0.08em',
+            background: 'linear-gradient(135deg, #FFF 20%, #F5E490 60%, #C9A227 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}
+        >
+          PITCH NEPAL
+        </h3>
+        <p
+          className="text-[11px] font-semibold tracking-widest uppercase"
+          style={{ color: 'var(--gold-400)', fontFamily: 'var(--font-heading)', letterSpacing: '0.15em' }}
+        >
+          Est. 2024 · Kathmandu
+        </p>
+      </motion.div>
+
+      {/* Floating Badge 1 - Top Right */}
+      <motion.div
+        animate={{ y: [-4, 4, -4] }}
+        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute top-6 right-0 sm:right-2 z-20 px-3.5 py-2 rounded-2xl flex items-center gap-2 shadow-xl backdrop-blur-md"
+        style={{
+          background: 'rgba(20, 20, 20, 0.9)',
+          border: '1px solid rgba(201, 162, 39, 0.35)',
+          boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+        }}
+      >
+        <span className="text-base">🏏</span>
+        <div>
+          <p className="text-[10px] text-muted uppercase font-bold" style={{ letterSpacing: '0.05em' }}>Grade 1</p>
+          <p className="text-xs font-bold text-white" style={{ fontFamily: 'var(--font-heading)' }}>English Willow</p>
+        </div>
+      </motion.div>
+
+      {/* Floating Badge 2 - Bottom Left */}
+      <motion.div
+        animate={{ y: [4, -4, 4] }}
+        transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute bottom-8 left-0 sm:left-2 z-20 px-3.5 py-2 rounded-2xl flex items-center gap-2 shadow-xl backdrop-blur-md"
+        style={{
+          background: 'rgba(20, 20, 20, 0.9)',
+          border: '1px solid rgba(201, 162, 39, 0.35)',
+          boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+        }}
+      >
+        <span className="text-base">🇳🇵</span>
+        <div>
+          <p className="text-[10px] text-muted uppercase font-bold" style={{ letterSpacing: '0.05em' }}>Nationwide</p>
+          <p className="text-xs font-bold text-white" style={{ fontFamily: 'var(--font-heading)' }}>7 Provinces Delivery</p>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
+/* ── Testimonial ─────────────────────────────────────────────── */
 const TESTIMONIALS = [
   { name: 'Rohan Thapa', role: 'Club Captain, Lalitpur CC', text: 'PitchNepal has the best selection of SG bats in all of Nepal. Top quality, fast delivery!', rating: 5 },
   { name: 'Priya Sharma', role: 'Kathmandu Cricket Academy', text: 'Finally a store that stocks authentic gear. Got my gloves and bat in pristine condition!', rating: 5 },
@@ -196,7 +327,7 @@ export default function HomePage() {
     <div className="relative overflow-x-hidden" style={{ background: 'var(--bg-primary)' }}>
 
       {/* ═══════════════════════════════════════════════════
-          HERO SECTION — 3D Bat, Ball & Stumps + Parallax
+          HERO SECTION — Lightweight 2D Emblem + Parallax
       ════════════════════════════════════════════════════ */}
       <section
         ref={heroRef}
@@ -292,22 +423,14 @@ export default function HomePage() {
             </motion.div>
           </div>
 
-          {/* Three.js Website Logo Emblem */}
+          {/* Lightweight 2D Website Logo Emblem */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.85 }}
+            initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="relative h-[480px] lg:h-[560px] flex items-center justify-center"
+            transition={{ duration: 0.8, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="relative flex items-center justify-center py-6"
           >
-            <Suspense fallback={
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="w-16 h-16 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--gold-400)', borderTopColor: 'transparent' }} />
-              </div>
-            }>
-              <PitchNepalLogo3D className="w-full h-full" />
-            </Suspense>
-            {/* Glow beneath */}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-64 h-20 blur-3xl rounded-full" style={{ background: 'radial-gradient(ellipse, rgba(201,162,39,0.3), transparent)' }} />
+            <PitchNepalHeroEmblem2D />
           </motion.div>
         </motion.div>
 
