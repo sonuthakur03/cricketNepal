@@ -5,7 +5,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // PitchNepal Vibrant Cricket Green Palette
+        // PitchNepal Cricket Green Palette
         primary: {
           50: "#f0fdf4",
           100: "#dcfce7",
