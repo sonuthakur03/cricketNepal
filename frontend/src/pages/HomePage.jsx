@@ -336,12 +336,13 @@ export default function HomePage() {
       >
         {/* Background grid */}
         <div className="absolute inset-0" style={{
-          backgroundImage: 'linear-gradient(rgba(201,162,39,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(201,162,39,0.04) 1px, transparent 1px)',
+          backgroundImage: 'linear-gradient(rgba(220,38,38,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.04) 1px, transparent 1px)',
           backgroundSize: '60px 60px',
         }} />
 
-        {/* Gold radial glow */}
-        <div className="absolute top-1/2 right-[30%] -translate-y-1/2 w-[600px] h-[600px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(201,162,39,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        {/* Vibrant sports radial glows */}
+        <div className="absolute top-1/3 right-[20%] w-[500px] h-[500px] rounded-full blur-3xl opacity-20 pointer-events-none" style={{ background: 'radial-gradient(circle, #DC2626 0%, transparent 70%)' }} />
+        <div className="absolute bottom-1/4 left-[10%] w-[450px] h-[450px] rounded-full blur-3xl opacity-15 pointer-events-none" style={{ background: 'radial-gradient(circle, #2563EB 0%, transparent 70%)' }} />
 
         <motion.div style={{ opacity: heroOpacity, y: heroY }} className="page-container relative z-10 grid lg:grid-cols-2 gap-12 items-center pt-20 pb-16">
           {/* Text */}
@@ -352,7 +353,7 @@ export default function HomePage() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="section-label mb-6"
             >
-              <div className="w-1.5 h-1.5 rounded-full bg-gold-400 animate-pulse" style={{ background: 'var(--gold-400)' }} />
+              <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
               Nepal Premier Cricket Destination
             </motion.div>
 

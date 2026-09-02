@@ -19,25 +19,24 @@ const NAV_LINKS = [
 
 const CATEGORIES = ['Bats', 'Balls', 'Gloves', 'Pads', 'Helmets', 'Jerseys', 'Shoes', 'Accessories']
 
-// PN Wicket Logo SVG
+// PN Wicket Logo SVG — Vibrant Cricket Crimson & Gold
 function PNLogo({ size = 36 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect width="40" height="40" rx="10" fill="url(#logoGrad)" />
       {/* Stumps */}
-      <rect x="11" y="9" width="2.5" height="18" rx="1.25" fill="#0a0a0a" />
-      <rect x="18.75" y="9" width="2.5" height="18" rx="1.25" fill="#0a0a0a" />
-      <rect x="26.5" y="9" width="2.5" height="18" rx="1.25" fill="#0a0a0a" />
+      <rect x="11" y="9" width="2.5" height="18" rx="1.25" fill="#FFFFFF" />
+      <rect x="18.75" y="9" width="2.5" height="18" rx="1.25" fill="#FFFFFF" />
+      <rect x="26.5" y="9" width="2.5" height="18" rx="1.25" fill="#FFFFFF" />
       {/* Bails */}
-      <rect x="9.5" y="7.5" width="7.5" height="2.5" rx="1.25" fill="#0a0a0a" />
-      <rect x="21" y="7.5" width="9" height="2.5" rx="1.25" fill="#0a0a0a" />
+      <rect x="9.5" y="7.5" width="7.5" height="2.5" rx="1.25" fill="#FDE047" />
+      <rect x="21" y="7.5" width="9" height="2.5" rx="1.25" fill="#FDE047" />
       {/* Ground line */}
-      <rect x="8" y="27" width="24" height="1.5" rx="0.75" fill="rgba(10,10,10,0.5)" />
+      <rect x="8" y="27" width="24" height="1.5" rx="0.75" fill="rgba(255,255,255,0.8)" />
       <defs>
         <linearGradient id="logoGrad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#ECC84A" />
-          <stop offset="50%" stopColor="#C9A227" />
-          <stop offset="100%" stopColor="#A07820" />
+          <stop offset="0%" stopColor="#DC2626" />
+          <stop offset="100%" stopColor="#991B1B" />
         </linearGradient>
       </defs>
     </svg>
@@ -125,14 +124,13 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
             <NavLink
               to="/products"
               className={({ isActive }) =>
-                `px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
-                  isActive ? 'text-gold' : ''
+                `px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 ${
+                  isActive ? 'text-primary-600 bg-red-500/10' : 'hover:text-primary-600'
                 }`
               }
               style={({ isActive }) => ({
-                color: isActive ? 'var(--gold-400)' : 'var(--text-secondary)',
+                color: isActive ? '#DC2626' : 'var(--text-secondary)',
                 fontFamily: 'var(--font-heading)',
-                fontWeight: 600,
               })}
             >
               Shop
@@ -141,14 +139,13 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
             <NavLink
               to="/about"
               className={({ isActive }) =>
-                `px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
-                  isActive ? 'text-gold' : ''
+                `px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 ${
+                  isActive ? 'text-primary-600 bg-red-500/10' : 'hover:text-primary-600'
                 }`
               }
               style={({ isActive }) => ({
-                color: isActive ? 'var(--gold-400)' : 'var(--text-secondary)',
+                color: isActive ? '#DC2626' : 'var(--text-secondary)',
                 fontFamily: 'var(--font-heading)',
-                fontWeight: 600,
               })}
             >
               About
@@ -158,13 +155,13 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
               <NavLink
                 to="/seller"
                 className={({ isActive }) =>
-                  `px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all duration-150 ml-2 ${
-                    isActive ? 'bg-gold-400 text-black' : 'bg-white/5 text-gold-400 border border-gold-400/30 hover:bg-gold-400/10'
+                  `px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase transition-all duration-150 ml-2 ${
+                    isActive ? 'bg-primary-600 text-white' : 'bg-red-500/10 text-primary-600 border border-primary-500/30 hover:bg-primary-500/20'
                   }`
                 }
                 style={{
                   fontFamily: 'var(--font-heading)',
-                  letterSpacing: '0.06em',
+                  letterSpacing: '0.04em',
                 }}
               >
                 Seller Dashboard
@@ -175,13 +172,13 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
               <NavLink
                 to="/admin"
                 className={({ isActive }) =>
-                  `px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all duration-150 ml-2 ${
-                    isActive ? 'bg-gold-400 text-black' : 'bg-white/5 text-gold-400 border border-gold-400/30 hover:bg-gold-400/10'
+                  `px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase transition-all duration-150 ml-2 ${
+                    isActive ? 'bg-blue-600 text-white' : 'bg-blue-500/10 text-blue-500 border border-blue-500/30 hover:bg-blue-500/20'
                   }`
                 }
                 style={{
                   fontFamily: 'var(--font-heading)',
-                  letterSpacing: '0.06em',
+                  letterSpacing: '0.04em',
                 }}
               >
                 Admin Dashboard
@@ -194,44 +191,43 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
             {/* Search */}
             <button
               onClick={() => setSearchOpen(true)}
-              className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-white/5"
+              className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-red-500/10 hover:text-primary-600"
               style={{ color: 'var(--text-muted)' }}
             >
-              <HiOutlineSearch className="w-4.5 h-4.5" />
+              <HiOutlineSearch className="w-5 h-5" />
             </button>
 
             {/* Wishlist */}
             {isAuthenticated() && (
               <Link
                 to="/wishlist"
-                className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-white/5"
+                className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-red-500/10 hover:text-primary-600"
                 style={{ color: 'var(--text-muted)' }}
               >
-                <HiOutlineHeart className="w-4.5 h-4.5" />
+                <HiOutlineHeart className="w-5 h-5" />
               </Link>
             )}
 
             {/* Dark / Light Theme Toggle */}
             <button
               onClick={toggleDarkMode}
-              className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-white/5"
-              style={{ color: 'var(--gold-400)' }}
+              className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-amber-500/10 text-amber-500"
               title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
               {darkMode ? (
-                <HiOutlineSun className="w-4.5 h-4.5" />
+                <HiOutlineSun className="w-5 h-5" />
               ) : (
-                <HiOutlineMoon className="w-4.5 h-4.5" />
+                <HiOutlineMoon className="w-5 h-5" />
               )}
             </button>
 
             {/* Cart */}
             <button
               onClick={openCart}
-              className="relative w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-white/5"
-              style={{ color: 'var(--text-muted)' }}
+              className="relative w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-red-500/10 hover:text-primary-600"
+              style={{ color: 'var(--text-secondary)' }}
             >
-              <HiOutlineShoppingCart className="w-4.5 h-4.5" />
+              <HiOutlineShoppingCart className="w-5 h-5" />
               <AnimatePresence>
                 {totalItems > 0 && (
                   <motion.span
@@ -239,10 +235,10 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     exit={{ scale: 0 }}
-                    className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center"
-                    style={{ background: 'var(--gold-400)', color: '#080808' }}
+                    className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center text-white shadow-md"
+                    style={{ background: 'linear-gradient(135deg, #DC2626, #EF4444)' }}
                   >
-                    {totalItems > 9 ? '9+' : totalItems}
+                    {totalItems > 99 ? '99+' : totalItems}
                   </motion.span>
                 )}
               </AnimatePresence>

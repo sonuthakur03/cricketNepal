@@ -134,11 +134,11 @@ export default function ProductCard({ product, index = 0 }) {
 
         {/* Content */}
         <div className="p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--gold-400)', fontFamily: 'var(--font-heading)', letterSpacing: '0.06em' }}>
+          <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: '#2563EB', fontFamily: 'var(--font-heading)', letterSpacing: '0.04em' }}>
             {product.brand}
           </p>
           <Link to={`/products/${product.slug || product._id}`}>
-            <h3 className="font-semibold text-sm leading-snug line-clamp-2 mb-2 transition-colors duration-150 group-hover:text-gold-400"
+            <h3 className="font-bold text-sm leading-snug line-clamp-2 mb-2 transition-colors duration-150 hover:text-primary-600"
               style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
               {product.name}
             </h3>
@@ -147,7 +147,7 @@ export default function ProductCard({ product, index = 0 }) {
           <StarRating rating={product.rating} count={product.numReviews} />
 
           <div className="flex items-center gap-2 mt-2 mb-3">
-            <span className="text-base font-bold" style={{ color: 'var(--gold-400)', fontFamily: 'var(--font-mono)' }}>
+            <span className="text-base font-bold" style={{ color: '#DC2626', fontFamily: 'var(--font-mono)' }}>
               {formatPrice(finalPrice)}
             </span>
             {hasDiscount && (
@@ -163,21 +163,12 @@ export default function ProductCard({ product, index = 0 }) {
           <button
             onClick={handleAddToCart}
             disabled={product.stock === 0 || addingToCart}
-            className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-              product.stock === 0 ? 'cursor-not-allowed' : ''
+            className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all duration-200 ${
+              product.stock === 0 ? 'cursor-not-allowed opacity-50 bg-gray-200 dark:bg-gray-800 text-gray-500' : 'btn-primary'
             }`}
-            style={
-              product.stock === 0
-                ? { background: 'rgba(255,255,255,0.04)', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)' }
-                : {
-                    background: 'linear-gradient(135deg, var(--gold-300), var(--gold-400), var(--gold-500))',
-                    color: '#080808',
-                    boxShadow: hovered ? '0 0 20px rgba(201,162,39,0.3)' : 'none',
-                  }
-            }
           >
             <HiOutlineShoppingCart className="w-4 h-4" />
-            {addingToCart ? 'Adding…' : product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+            {addingToCart ? 'Adding to Kit…' : product.stock === 0 ? 'Sold Out' : 'Add to Cart'}
           </button>
         </div>
       </motion.div>
