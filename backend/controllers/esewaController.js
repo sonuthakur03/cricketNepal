@@ -30,12 +30,19 @@ const initiateEsewaPayment = asyncHandler(async (req, res) => {
 
   const merchantCode = (process.env.ESEWA_MERCHANT_ID || "EPAYTEST").trim();
   const secretKey = (process.env.ESEWA_SECRET_KEY || "8gBm/:&EnhH.1/q").trim();
-  const frontendUrl = (
+  let frontendUrl = (
     process.env.FRONTEND_URL || "http://localhost:5173"
   )
     .split(",")[0]
     .trim()
     .replace(/\/$/, "");
+
+  if (
+    !frontendUrl.startsWith("http://") &&
+    !frontendUrl.startsWith("https://")
+  ) {
+    frontendUrl = `https://${frontendUrl}`;
+  }
 
   // ── IMPORTANT: transaction_uuid must be unique per attempt ─────────────────
   const transactionUUID = `${order._id}-${Date.now()}`;

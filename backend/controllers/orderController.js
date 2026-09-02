@@ -137,12 +137,19 @@ const initiateKhaltiPayment = asyncHandler(async (req, res) => {
     throw new Error("Order already paid");
   }
 
-  const frontendBase = (
+  let frontendBase = (
     process.env.FRONTEND_URL || "http://localhost:5173"
   )
     .split(",")[0]
     .trim()
     .replace(/\/$/, "");
+
+  if (
+    !frontendBase.startsWith("http://") &&
+    !frontendBase.startsWith("https://")
+  ) {
+    frontendBase = `https://${frontendBase}`;
+  }
 
   const returnUrl = `${frontendBase}/payment/khalti/callback?orderId=${order._id}`;
 
