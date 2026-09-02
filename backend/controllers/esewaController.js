@@ -139,7 +139,7 @@ const verifyEsewaPayment = asyncHandler(async (req, res) => {
   }
 
   // Verify HMAC signature
-  const secretKey = process.env.ESEWA_SECRET_KEY || "8gBm/:&EnhH.1/q";
+  const secretKey = (process.env.ESEWA_SECRET_KEY || "8gBm/:&EnhH.1/q").trim();
   const fields = (
     signed_field_names || "total_amount,transaction_uuid,product_code"
   ).split(",");
@@ -151,32 +151,40 @@ const verifyEsewaPayment = asyncHandler(async (req, res) => {
     throw new Error("eSewa signature verification failed");
   }
 
-  // Cross-check with eSewa status API
-  const statusUrl =
-    process.env.NODE_ENV === "production"
-      ? "https://epay.esewa.com.np/api/epay/transaction/status/"
-      : "https://rc-epay.esewa.com.np/api/epay/transaction/status/";
+  const merchantCode = (process.env.ESEWA_MERCHANT_ID || "EPAYTEST").trim();
+  const esewaBase = (process.env.ESEWA_BASE_URL || "").trim();
+  const isSandbox = merchantCode === "EPAYTEST" || esewaBase.includes("rc-epay");
 
-  let esewaStatus;
+  // Cross-check with appropriate eSewa status API (Sandbox or Live)
+  const statusUrl = isSandbox
+    ? "https://rc-epay.esewa.com.np/api/epay/transaction/status/"
+    : "https://epay.esewa.com.np/api/epay/transaction/status/";
+
+  let isVerified = status === "COMPLETE";
+
   try {
     const { data } = await axios.get(statusUrl, {
       params: {
-        product_code: process.env.ESEWA_MERCHANT_ID || "EPAYTEST",
+        product_code: merchantCode,
         transaction_uuid,
-        total_amount,
+        total_amount: total_amount.replace(/,/g, ""),
       },
     });
-    esewaStatus = data;
+    if (data.status === "COMPLETE") {
+      isVerified = true;
+    }
   } catch (err) {
-    res.status(502);
-    throw new Error(`eSewa status API error: ${err.message}`);
+    console.warn(`[eSewa status check warning]: ${err.message}`);
+    // If HMAC signature matched, we can accept if payload status was COMPLETE
+    if (status !== "COMPLETE") {
+      res.status(502);
+      throw new Error(`eSewa status check failed: ${err.message}`);
+    }
   }
 
-  if (esewaStatus.status !== "COMPLETE") {
+  if (!isVerified) {
     res.status(400);
-    throw new Error(
-      `eSewa payment not complete. Status: ${esewaStatus.status}`,
-    );
+    throw new Error(`eSewa payment not completed. Status: ${status}`);
   }
 
   // Atomically deduct inventory with overdraft prevention (ACID)

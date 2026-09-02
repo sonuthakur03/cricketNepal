@@ -63,16 +63,44 @@ export default function OrderDetailPage() {
     fetchOrder();
   }, [id]);
 
-  // Retry payment
-  const handleRetryKhalti = async () => {
+  // Retry payment for unpaid orders (eSewa & Khalti)
+  const handleCompletePayment = async () => {
     setActionLoading(true);
     try {
-      const { data } = await api.post(`/orders/${order._id}/pay/khalti/initiate`);
-      if (data.payment_url) {
-        window.location.href = data.payment_url;
-      } else {
-        toast.error("Could not initiate payment");
+      if (order.paymentMethod === "khalti") {
+        const { data } = await api.post(`/orders/${order._id}/pay/khalti/initiate`);
+        const url = data.data?.payment_url || data.payment_url;
+        if (url) {
+          window.location.href = url;
+        } else {
+          toast.error("Could not initiate Khalti payment");
+        }
+        return;
       }
+
+      if (order.paymentMethod === "esewa") {
+        const { data } = await api.post(`/orders/${order._id}/pay/esewa/initiate`);
+        const formData = data.data;
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action =
+          formData.payment_url ||
+          formData.esewa_url ||
+          "https://rc-epay.esewa.com.np/api/epay/main/v2/form";
+        Object.entries(formData).forEach(([k, v]) => {
+          if (k === "esewa_url" || k === "payment_url") return;
+          const inp = document.createElement("input");
+          inp.type = "hidden";
+          inp.name = k;
+          inp.value = v;
+          form.appendChild(inp);
+        });
+        document.body.appendChild(form);
+        form.submit();
+        return;
+      }
+
+      toast.info("Please contact support or re-order for other payment methods.");
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -186,7 +214,7 @@ export default function OrderDetailPage() {
               <div className="flex gap-2">
                 {!order.isPaid && order.paymentMethod !== "cod" && order.orderStatus !== "cancelled" && (
                   <button
-                    onClick={handleRetryKhalti}
+                    onClick={handleCompletePayment}
                     disabled={actionLoading}
                     className="btn-primary text-xs py-2 px-4"
                   >
