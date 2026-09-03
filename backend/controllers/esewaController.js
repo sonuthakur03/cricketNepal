@@ -161,6 +161,7 @@ const verifyEsewaPayment = asyncHandler(async (req, res) => {
     : "https://epay.esewa.com.np/api/epay/transaction/status/";
 
   let isVerified = status === "COMPLETE";
+  let esewaRefId = transaction_code || "";
 
   try {
     const { data } = await axios.get(statusUrl, {
@@ -172,6 +173,7 @@ const verifyEsewaPayment = asyncHandler(async (req, res) => {
     });
     if (data.status === "COMPLETE") {
       isVerified = true;
+      if (data.ref_id) esewaRefId = data.ref_id;
     }
   } catch (err) {
     console.warn(`[eSewa status check warning]: ${err.message}`);
@@ -200,7 +202,7 @@ const verifyEsewaPayment = asyncHandler(async (req, res) => {
     paid_amount: Number(total_amount),
     payment_method: "esewa",
     verified_at: new Date(),
-    esewa_ref_id: esewaStatus.ref_id || transaction_code || "",
+    esewa_ref_id: esewaRefId,
   };
   await order.save();
 
