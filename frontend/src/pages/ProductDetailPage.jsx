@@ -103,10 +103,20 @@ export default function ProductDetailPage() {
   const handleReviewSubmit = async (e) => {
     e.preventDefault()
     if (!isAuthenticated()) { toast.error('Please sign in first'); return }
-    if (!reviewForm.comment.trim()) { toast.error('Please share your feedback'); return }
+    if (!reviewForm.rating || reviewForm.rating < 1) {
+      toast.error('Please select a star rating between 1 and 5')
+      return
+    }
+    if (!reviewForm.comment.trim() || reviewForm.comment.trim().length < 5) {
+      toast.error('Please provide at least 5 characters of feedback')
+      return
+    }
     setSubmittingReview(true)
     try {
-      const { data } = await api.post(`/products/${product._id}/reviews`, reviewForm)
+      const { data } = await api.post(`/products/${product._id}/reviews`, {
+        ...reviewForm,
+        comment: reviewForm.comment.trim(),
+      })
       toast.success(data.message || 'Review submitted successfully!')
       // Refresh product details and reviews
       const res = await api.get(`/products/${id}`)

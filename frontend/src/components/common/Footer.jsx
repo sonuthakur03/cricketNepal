@@ -3,6 +3,8 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { HiLocationMarker, HiPhone, HiMail, HiArrowRight } from 'react-icons/hi'
+import toast from 'react-hot-toast'
+import { validateEmail } from '../../utils/validators'
 
 const FOOTER_LINKS = {
   Shop: [
@@ -161,13 +163,29 @@ export default function Footer() {
               </h4>
               <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No spam. Unsubscribe anytime.</p>
             </div>
-            <form className="flex gap-2 w-full sm:w-auto" onSubmit={(e) => e.preventDefault()}>
+            <form
+              className="flex gap-2 w-full sm:w-auto"
+              noValidate
+              onSubmit={(e) => {
+                e.preventDefault()
+                const formElem = e.currentTarget
+                const inputElem = formElem.querySelector('input[type="email"]')
+                const emailVal = inputElem?.value || ''
+                const res = validateEmail(emailVal)
+                if (!res.isValid) {
+                  toast.error(res.error)
+                  return
+                }
+                toast.success('Subscribed! You are on the VIP cricket deals list 🏏')
+                if (inputElem) inputElem.value = ''
+              }}
+            >
               <input
                 type="email"
                 placeholder="your@email.com"
                 className="input text-sm py-2.5 w-full sm:w-64"
               />
-              <button type="submit" className="btn-primary px-4 py-2.5 flex-shrink-0">
+              <button type="submit" aria-label="Subscribe" className="btn-primary px-4 py-2.5 flex-shrink-0">
                 <HiArrowRight className="w-4 h-4" />
               </button>
             </form>

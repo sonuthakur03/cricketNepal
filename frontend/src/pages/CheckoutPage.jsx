@@ -1,9 +1,9 @@
-// src/pages/CheckoutPage.jsx — Clean, Balanced Multi-Step Checkout
+// src/pages/CheckoutPage.jsx — Clean, Balanced Multi-Step Checkout with full validation
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
-import { HiOutlineCheckCircle } from "react-icons/hi";
+import { HiOutlineCheckCircle, HiOutlineExclamationCircle } from "react-icons/hi";
 import api from "../utils/api";
 import StripePayment from "../components/payment/StripePayment";
 import useCartStore from "../context/cartStore";
@@ -14,6 +14,11 @@ import {
   NEPAL_CITIES,
   getErrorMessage,
 } from "../utils/helpers";
+import {
+  validateName,
+  validatePhone,
+  validateRequiredText,
+} from "../utils/validators";
 
 const PAYMENT_METHODS = [
   {
@@ -59,15 +64,75 @@ export default function CheckoutPage() {
     phone: user?.phone || "",
     street: user?.address?.street || "",
     city: user?.address?.city || "Kathmandu",
-    district: user?.address?.district || "",
+    district: user?.address?.district || "Kathmandu",
     province: user?.address?.province || "Bagmati",
     postalCode: "",
   });
+
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
   const subtotal = getSubtotal();
   const shippingCost = getShipping();
   const tax = getTax();
   const total = getTotal();
+
+  const validateField = (field, value) => {
+    let err = "";
+    if (field === "fullName") {
+      const res = validateName(value, "Full Name", 2);
+      if (!res.isValid) err = res.error;
+    } else if (field === "phone") {
+      const res = validatePhone(value, true);
+      if (!res.isValid) err = res.error;
+    } else if (field === "province") {
+      if (!value) err = "Please select your province";
+    } else if (field === "city") {
+      const res = validateRequiredText(value, "City / Town", 2);
+      if (!res.isValid) err = res.error;
+    } else if (field === "district") {
+      const res = validateRequiredText(value, "District", 2);
+      if (!res.isValid) err = res.error;
+    } else if (field === "street") {
+      const res = validateRequiredText(value, "Street / Tole / Landmark", 3);
+      if (!res.isValid) err = res.error;
+    }
+    setErrors((prev) => ({ ...prev, [field]: err }));
+    return !err;
+  };
+
+  const handleBlur = (field) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    validateField(field, shipping[field]);
+  };
+
+  const handleChange = (field, value) => {
+    setShipping((prev) => ({ ...prev, [field]: value }));
+    if (touched[field] || errors[field]) {
+      validateField(field, value);
+    }
+  };
+
+  const handleContinueToPayment = () => {
+    const fieldsToValidate = ["fullName", "phone", "province", "city", "district", "street"];
+    const newTouched = {};
+    let allValid = true;
+
+    fieldsToValidate.forEach((f) => {
+      newTouched[f] = true;
+      const ok = validateField(f, shipping[f]);
+      if (!ok) allValid = false;
+    });
+
+    setTouched(newTouched);
+
+    if (!allValid) {
+      toast.error("Please fill in all shipping details correctly");
+      return;
+    }
+
+    setStep(2);
+  };
 
   if (items.length === 0 && !orderId) {
     return (
@@ -205,7 +270,7 @@ export default function CheckoutPage() {
         Checkout
       </h1>
 
-      {/* Step indicator — Clean & Neutral */}
+      {/* Step indicator */}
       <div className="flex items-center gap-2 mb-8 text-sm font-semibold flex-wrap">
         {["Shipping", "Payment", "Confirm"].map((s, i) => (
           <div key={s} className="flex items-center gap-2">
@@ -257,91 +322,163 @@ export default function CheckoutPage() {
                 <div className="sm:col-span-2">
                   <label className="label">Full Name *</label>
                   <input
-                    className="input"
+                    className={`input ${touched.fullName && errors.fullName ? "border-red-500 ring-1 ring-red-500/20" : ""}`}
                     value={shipping.fullName}
-                    required
-                    onChange={(e) =>
-                      setShipping({ ...shipping, fullName: e.target.value })
-                    }
+                    placeholder="Recipient's full name (no numbers)"
+                    onChange={(e) => handleChange("fullName", e.target.value)}
+                    onBlur={() => handleBlur("fullName")}
                   />
+                  <AnimatePresence>
+                    {touched.fullName && errors.fullName && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4, height: 0 }}
+                        animate={{ opacity: 1, y: 0, height: "auto" }}
+                        exit={{ opacity: 0, y: -4, height: 0 }}
+                        className="flex items-center gap-1.5 mt-1.5 text-xs text-red-400"
+                      >
+                        <HiOutlineExclamationCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>{errors.fullName}</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
+
                 <div>
-                  <label className="label">Phone *</label>
+                  <label className="label">Phone Number *</label>
                   <input
-                    className="input"
+                    className={`input ${touched.phone && errors.phone ? "border-red-500 ring-1 ring-red-500/20" : ""}`}
                     value={shipping.phone}
                     placeholder="+977 98XXXXXXXX"
-                    onChange={(e) =>
-                      setShipping({ ...shipping, phone: e.target.value })
-                    }
+                    onChange={(e) => handleChange("phone", e.target.value)}
+                    onBlur={() => handleBlur("phone")}
                   />
+                  <AnimatePresence>
+                    {touched.phone && errors.phone && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4, height: 0 }}
+                        animate={{ opacity: 1, y: 0, height: "auto" }}
+                        exit={{ opacity: 0, y: -4, height: 0 }}
+                        className="flex items-center gap-1.5 mt-1.5 text-xs text-red-400"
+                      >
+                        <HiOutlineExclamationCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>{errors.phone}</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
+
                 <div>
                   <label className="label">Province *</label>
                   <select
-                    className="input"
+                    className={`input ${touched.province && errors.province ? "border-red-500 ring-1 ring-red-500/20" : ""}`}
                     value={shipping.province}
-                    onChange={(e) =>
-                      setShipping({ ...shipping, province: e.target.value })
-                    }
+                    onChange={(e) => handleChange("province", e.target.value)}
+                    onBlur={() => handleBlur("province")}
                   >
+                    <option value="">Select Province</option>
                     {NEPAL_PROVINCES.map((p) => (
-                      <option key={p}>{p}</option>
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
                     ))}
                   </select>
+                  <AnimatePresence>
+                    {touched.province && errors.province && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4, height: 0 }}
+                        animate={{ opacity: 1, y: 0, height: "auto" }}
+                        exit={{ opacity: 0, y: -4, height: 0 }}
+                        className="flex items-center gap-1.5 mt-1.5 text-xs text-red-400"
+                      >
+                        <HiOutlineExclamationCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>{errors.province}</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
+
                 <div>
-                  <label className="label">City *</label>
+                  <label className="label">City / Town *</label>
                   <input
                     list="cities-co"
-                    className="input"
+                    className={`input ${touched.city && errors.city ? "border-red-500 ring-1 ring-red-500/20" : ""}`}
                     value={shipping.city}
-                    onChange={(e) =>
-                      setShipping({ ...shipping, city: e.target.value })
-                    }
+                    placeholder="e.g. Kathmandu, Pokhara"
+                    onChange={(e) => handleChange("city", e.target.value)}
+                    onBlur={() => handleBlur("city")}
                   />
                   <datalist id="cities-co">
                     {NEPAL_CITIES.map((c) => (
                       <option key={c} value={c} />
                     ))}
                   </datalist>
+                  <AnimatePresence>
+                    {touched.city && errors.city && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4, height: 0 }}
+                        animate={{ opacity: 1, y: 0, height: "auto" }}
+                        exit={{ opacity: 0, y: -4, height: 0 }}
+                        className="flex items-center gap-1.5 mt-1.5 text-xs text-red-400"
+                      >
+                        <HiOutlineExclamationCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>{errors.city}</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
+
                 <div>
                   <label className="label">District *</label>
                   <input
-                    className="input"
+                    className={`input ${touched.district && errors.district ? "border-red-500 ring-1 ring-red-500/20" : ""}`}
                     value={shipping.district}
-                    onChange={(e) =>
-                      setShipping({ ...shipping, district: e.target.value })
-                    }
+                    placeholder="e.g. Kathmandu, Lalitpur"
+                    onChange={(e) => handleChange("district", e.target.value)}
+                    onBlur={() => handleBlur("district")}
                   />
+                  <AnimatePresence>
+                    {touched.district && errors.district && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4, height: 0 }}
+                        animate={{ opacity: 1, y: 0, height: "auto" }}
+                        exit={{ opacity: 0, y: -4, height: 0 }}
+                        className="flex items-center gap-1.5 mt-1.5 text-xs text-red-400"
+                      >
+                        <HiOutlineExclamationCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>{errors.district}</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
+
                 <div className="sm:col-span-2">
-                  <label className="label">Street / Tole *</label>
+                  <label className="label">Street / Tole / Landmark *</label>
                   <input
-                    className="input"
+                    className={`input ${touched.street && errors.street ? "border-red-500 ring-1 ring-red-500/20" : ""}`}
                     value={shipping.street}
                     placeholder="Ward no., Tole, Landmark"
-                    onChange={(e) =>
-                      setShipping({ ...shipping, street: e.target.value })
-                    }
+                    onChange={(e) => handleChange("street", e.target.value)}
+                    onBlur={() => handleBlur("street")}
                   />
+                  <AnimatePresence>
+                    {touched.street && errors.street && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4, height: 0 }}
+                        animate={{ opacity: 1, y: 0, height: "auto" }}
+                        exit={{ opacity: 0, y: -4, height: 0 }}
+                        className="flex items-center gap-1.5 mt-1.5 text-xs text-red-400"
+                      >
+                        <HiOutlineExclamationCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>{errors.street}</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
+
               <button
-                onClick={() => {
-                  if (
-                    !shipping.fullName ||
-                    !shipping.phone ||
-                    !shipping.street ||
-                    !shipping.city ||
-                    !shipping.district
-                  ) {
-                    toast.error("Please fill all required fields");
-                    return;
-                  }
-                  setStep(2);
-                }}
+                type="button"
+                onClick={handleContinueToPayment}
                 className="btn-primary mt-6 w-full py-3.5"
               >
                 Continue to Payment →
@@ -443,6 +580,7 @@ export default function CheckoutPage() {
 
               <div className="flex gap-3">
                 <button
+                  type="button"
                   onClick={() => setStep(1)}
                   className="btn-secondary flex-1 py-3"
                 >
@@ -450,6 +588,7 @@ export default function CheckoutPage() {
                 </button>
                 {paymentMethod !== "stripe" && (
                   <button
+                    type="button"
                     onClick={handlePlaceOrder}
                     disabled={loading}
                     className="btn-primary flex-1 py-3"
@@ -463,6 +602,7 @@ export default function CheckoutPage() {
                 )}
                 {paymentMethod === "stripe" && !stripeOrderId && (
                   <button
+                    type="button"
                     onClick={async () => {
                       setLoading(true);
                       try {
@@ -485,7 +625,7 @@ export default function CheckoutPage() {
           )}
         </div>
 
-        {/* Order summary — Clean & High Contrast */}
+        {/* Order summary */}
         <div className="card p-5 h-fit sticky top-24">
           <h3
             className="font-bold mb-4 text-slate-900 dark:text-white"

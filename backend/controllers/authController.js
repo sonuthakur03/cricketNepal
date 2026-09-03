@@ -15,18 +15,44 @@ const { sendTokenResponse } = require('../utils/tokenHelper');
 const register = asyncHandler(async (req, res) => {
   const { name, email, password, role } = req.body;
 
+  if (!name || !name.trim() || name.trim().length < 2) {
+    res.status(400);
+    throw new Error('Name must be at least 2 characters');
+  }
+
+  if (/\d/.test(name)) {
+    res.status(400);
+    throw new Error('Name cannot contain numbers');
+  }
+
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!email || !emailRegex.test(email.trim())) {
+    res.status(400);
+    throw new Error('Please provide a valid email address');
+  }
+
+  if (!password || password.length < 6) {
+    res.status(400);
+    throw new Error('Password must be at least 6 characters');
+  }
+
   // Prevent external role escalation — only 'user' or 'seller' allowed on self-register
   const allowedRoles = ['user', 'seller'];
   const assignedRole = allowedRoles.includes(role) ? role : 'user';
 
   // Check if email is already taken
-  const existingUser = await User.findOne({ email });
+  const existingUser = await User.findOne({ email: email.trim().toLowerCase() });
   if (existingUser) {
     res.status(400);
     throw new Error('Email is already registered');
   }
 
-  const user = await User.create({ name, email, password, role: assignedRole });
+  const user = await User.create({
+    name: name.trim(),
+    email: email.trim().toLowerCase(),
+    password,
+    role: assignedRole,
+  });
 
   // Generate email verification token
   const verifyToken = user.getEmailVerificationToken();
@@ -121,6 +147,18 @@ const updateProfile = asyncHandler(async (req, res) => {
     if (req.body[field] !== undefined) updates[field] = req.body[field];
   });
 
+  if (updates.name !== undefined) {
+    if (!updates.name.trim() || updates.name.trim().length < 2) {
+      res.status(400);
+      throw new Error('Name must be at least 2 characters');
+    }
+    if (/\d/.test(updates.name)) {
+      res.status(400);
+      throw new Error('Name cannot contain numbers');
+    }
+    updates.name = updates.name.trim();
+  }
+
   // Handle seller info update
   if (req.user.role === 'seller' && req.body.sellerInfo) {
     updates.sellerInfo = { ...req.user.sellerInfo, ...req.body.sellerInfo };
@@ -141,6 +179,21 @@ const updateProfile = asyncHandler(async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const changePassword = asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    res.status(400);
+    throw new Error('Please provide current password and new password');
+  }
+
+  if (newPassword.length < 6) {
+    res.status(400);
+    throw new Error('New password must be at least 6 characters');
+  }
+
+  if (currentPassword === newPassword) {
+    res.status(400);
+    throw new Error('New password must be different from current password');
+  }
 
   const user = await User.findById(req.user.id).select('+password');
 

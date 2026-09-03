@@ -134,15 +134,19 @@ export default function OrderDetailPage() {
     e.preventDefault();
     if (!reviewItem) return;
     const productId = reviewItem.product?._id || reviewItem.product;
-    if (!reviewComment.trim()) {
-      toast.error("Please provide your review feedback");
+    if (!reviewRating || reviewRating < 1) {
+      toast.error("Please select a star rating between 1 and 5");
+      return;
+    }
+    if (!reviewComment.trim() || reviewComment.trim().length < 5) {
+      toast.error("Please provide at least 5 characters of feedback");
       return;
     }
     setSubmittingReview(true);
     try {
       await api.post(`/products/${productId}/reviews`, {
         rating: reviewRating,
-        comment: reviewComment,
+        comment: reviewComment.trim(),
       });
       toast.success("Thank you! Your verified review has been published ⭐");
       setReviewItem(null);
