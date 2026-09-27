@@ -155,7 +155,8 @@ const initiateKhaltiPayment = asyncHandler(async (req, res) => {
 
   let rawKey = (process.env.KHALTI_SECRET_KEY || "").trim();
   if (!rawKey || rawKey.includes("xxxxxxxx") || rawKey.length < 15) {
-    rawKey = "Key 825405e3ec9744c8b21c4355204481b4";
+    res.status(500);
+    throw new Error("Khalti secret key is missing or misconfigured in production");
   }
   const authHeader = rawKey.startsWith("Key ") ? rawKey : `Key ${rawKey}`;
 
@@ -235,9 +236,11 @@ const verifyKhaltiPayment = asyncHandler(async (req, res) => {
     throw new Error("Missing pidx");
   }
 
-  const rawKey =
-    process.env.KHALTI_SECRET_KEY ||
-    "Key 825405e3ec9744c8b21c4355204481b4";
+  const rawKey = (process.env.KHALTI_SECRET_KEY || "").trim();
+  if (!rawKey || rawKey.includes("xxxxxxxx") || rawKey.length < 15) {
+    res.status(500);
+    throw new Error("Khalti secret key is missing or misconfigured in production");
+  }
   const authHeader = rawKey.startsWith("Key ") ? rawKey : `Key ${rawKey}`;
 
   try {

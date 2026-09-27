@@ -29,7 +29,11 @@ const initiateEsewaPayment = asyncHandler(async (req, res) => {
   }
 
   const merchantCode = (process.env.ESEWA_MERCHANT_ID || "EPAYTEST").trim();
-  const secretKey = (process.env.ESEWA_SECRET_KEY || "8gBm/:&EnhH.1/q").trim();
+  const secretKey = (process.env.ESEWA_SECRET_KEY || "").trim();
+  if (!secretKey) {
+    res.status(500);
+    throw new Error("eSewa secret key is missing or misconfigured");
+  }
   let frontendUrl = (
     process.env.FRONTEND_URL || "http://localhost:5173"
   )
@@ -139,7 +143,11 @@ const verifyEsewaPayment = asyncHandler(async (req, res) => {
   }
 
   // Verify HMAC signature
-  const secretKey = (process.env.ESEWA_SECRET_KEY || "8gBm/:&EnhH.1/q").trim();
+  const secretKey = (process.env.ESEWA_SECRET_KEY || "").trim();
+  if (!secretKey) {
+    res.status(500);
+    throw new Error("eSewa secret key is missing or misconfigured");
+  }
   const fields = (
     signed_field_names || "total_amount,transaction_uuid,product_code"
   ).split(",");

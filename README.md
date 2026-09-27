@@ -41,7 +41,7 @@ cricketnepal/
 │   ├── package.json
 │   └── server.js                   # App entry point
 │
-└── frontend/                       # React + Vite (coming next)
+└── frontend/                       # React + Vite
     ├── src/
     │   ├── components/
     │   ├── pages/
@@ -119,6 +119,9 @@ npm run dev
 | `KHALTI_SECRET_KEY` | Khalti test secret key | [Khalti Merchant Dashboard](https://khalti.com) |
 | `KHALTI_PUBLIC_KEY` | Khalti test public key | [Khalti Merchant Dashboard](https://khalti.com) |
 | `ESEWA_MERCHANT_ID` | eSewa merchant ID (`EPAYTEST` for test) | [eSewa Developer](https://developer.esewa.com.np) |
+| `ESEWA_SECRET_KEY`  | eSewa test secret key | [eSewa Developer](https://developer.esewa.com.np) |
+| `STRIPE_SECRET_KEY` | Stripe secret key | [Stripe Dashboard](https://dashboard.stripe.com/) |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret (optional in dev) | [Stripe Webhooks](https://dashboard.stripe.com/webhooks) |
 
 ---
 
@@ -212,7 +215,7 @@ npm run dev
 
 1. Sign up at [khalti.com/merchant](https://khalti.com/merchant/)
 2. Get test keys from the merchant dashboard
-3. Add to `.env`: `KHALTI_SECRET_KEY` and `KHALTI_PUBLIC_KEY`
+3. Add to `.env`: `KHALTI_SECRET_KEY` and `KHALTI_PUBLIC_KEY` *(Note: valid keys are strictly required, no fallback test keys are provided by default to prevent production leaks)*
 
 **Flow:**
 ```
@@ -232,6 +235,7 @@ Backend: Verifies token with Khalti API → marks order paid
 
 1. Get test credentials from [developer.esewa.com.np](https://developer.esewa.com.np)
 2. Merchant ID for testing: `EPAYTEST`
+3. Add to `.env`: `ESEWA_SECRET_KEY` *(Note: valid keys are strictly required)*
 
 **Flow:**
 ```
@@ -246,6 +250,24 @@ Backend: Verifies with eSewa status API → marks order paid
 - eSewa ID: `9806800001` / `9806800002`
 - Password: `Nepal@123`
 - Token: `123456`
+
+### Stripe (International Cards)
+
+1. Get API keys from [Stripe Dashboard](https://dashboard.stripe.com/)
+2. Add to `.env`: `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`
+
+**Flow:**
+```
+Frontend: Create Payment Intent by calling POST `/api/stripe/create-intent/:id`
+Stripe: Returns `clientSecret`
+Frontend: Uses Stripe Elements to confirm payment with `clientSecret`
+Backend: Webhook or explicit verification confirms the payment status and marks the order paid.
+```
+
+**Test credentials:**
+- Test Card: `4242 4242 4242 4242`
+- Expiry: Any future date (e.g., `12/30`)
+- CVC: Any 3 digits (e.g., `123`)
 
 ### Cash on Delivery (COD)
 

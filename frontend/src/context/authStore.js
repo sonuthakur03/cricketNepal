@@ -10,7 +10,6 @@ const useAuthStore = create(
   persist(
     (set, get) => ({
       user: null,
-      token: null,
       isLoading: false,
       error: null,
 
@@ -18,12 +17,11 @@ const useAuthStore = create(
         set({ isLoading: true, error: null });
         try {
           const { data } = await api.post("/auth/register", formData);
-          localStorage.setItem("token", data.token);
           // Init cart for this new user
           try {
             useCartStore.getState().initCartForUser(data.data._id);
           } catch {}
-          set({ user: data.data, token: data.token, isLoading: false });
+          set({ user: data.data, isLoading: false });
           return { success: true, message: data.message };
         } catch (err) {
           const message = getErrorMessage(err);
@@ -36,12 +34,11 @@ const useAuthStore = create(
         set({ isLoading: true, error: null });
         try {
           const { data } = await api.post("/auth/login", { email, password });
-          localStorage.setItem("token", data.token);
           // Scope cart to this user
           try {
             useCartStore.getState().initCartForUser(data.data._id);
           } catch {}
-          set({ user: data.data, token: data.token, isLoading: false });
+          set({ user: data.data, isLoading: false });
           return { success: true };
         } catch (err) {
           const message = getErrorMessage(err);
@@ -51,23 +48,20 @@ const useAuthStore = create(
       },
 
       logout: async () => {
-        // Clear local storage and tokens immediately
-        localStorage.removeItem("token");
         try {
           useCartStore.getState().clearCartOnLogout();
         } catch {}
         try {
           useWishlistStore.getState().resetWishlist();
         } catch {}
-        set({ user: null, token: null, isLoading: false, error: null });
+        set({ user: null, isLoading: false, error: null });
         try {
           await api.post("/auth/logout");
         } catch {}
       },
 
       fetchMe: async () => {
-        const token = localStorage.getItem("token");
-        if (!token) return;
+        if (!get().user) return;
         try {
           const { data } = await api.get("/auth/me");
           // Re-init cart for the restored user
@@ -76,8 +70,7 @@ const useAuthStore = create(
           } catch {}
           set({ user: data.data });
         } catch {
-          localStorage.removeItem("token");
-          set({ user: null, token: null });
+          set({ user: null });
         }
       },
 
@@ -108,14 +101,14 @@ const useAuthStore = create(
         }
       },
 
-      isAuthenticated: () => !!get().token && !!get().user,
+      isAuthenticated: () => !!get().user,
       isAdmin: () => get().user?.role === "admin",
       isSeller: () => ["seller", "admin"].includes(get().user?.role),
       clearError: () => set({ error: null }),
     }),
     {
       name: "pitchnepal-auth",
-      partialize: (state) => ({ user: state.user, token: state.token }),
+      partialize: (state) => ({ user: state.user }),
     },
   ),
 );

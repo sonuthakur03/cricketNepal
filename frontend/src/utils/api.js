@@ -10,18 +10,6 @@ const api = axios.create({
   timeout: 15000,
 });
 
-// ── Request: attach token from localStorage ───────────────────────────────────
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error),
-);
-
 // ── Response: only redirect to /login on 401 for PROTECTED routes ─────────────
 // Public routes (/products, home) may also call the API without a token.
 // We should NOT redirect those — only redirect when the user is supposed
@@ -45,7 +33,6 @@ api.interceptors.response.use(
       const isProtected = PROTECTED_PREFIXES.some((p) => url.includes(p));
 
       if (isProtected) {
-        localStorage.removeItem("token");
         // Only hard-redirect if not already on the login page
         if (!window.location.pathname.includes("/login")) {
           window.location.href = "/login";
